@@ -31,34 +31,14 @@ fn random_point_around_position(pos: &Vec3, min_dist: f32, max_dist: f32) -> Vec
     Vec3::new(pos.x + dist * angle.cos(), pos.y + dist * angle.sin(), 0.0)
 }
 
-#[derive(Resource, Reflect, Debug, Default)]
-#[reflect(Resource)]
-#[insert_resource(plugin = EnemyPlugin)]
-struct EnemyTextureAtlas(pub Handle<TextureAtlasLayout>);
-
-#[add_system(schedule = Startup, plugin = EnemyPlugin)]
-fn setup_atlas(
-    mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
-    mut handle: ResMut<EnemyTextureAtlas>,
-) {
-    handle.0 = texture_atlases.add(TextureAtlasLayout::from_grid(
-        UVec2::splat(32),
-        10,
-        4,
-        None,
-        None,
-    ));
-}
-
-#[add_system(schedule = Update, plugin = EnemyPlugin)]
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
 fn spawn_enemies(
     mut commands: Commands,
     time: Res<Time>,
     mut spawn_timer: ResMut<EnemySpawnTimer>,
     query: Query<&Transform, With<Player>>,
     enemies_query: Query<&Enemy>,
-    assets: Res<AssetServer>,
-    handle: Res<EnemyTextureAtlas>,
+    assets: Res<SlimeAssets>,
 ) {
     spawn_timer.timer.tick(time.delta());
 
@@ -78,10 +58,10 @@ fn spawn_enemies(
                 Name::new("Enemy"),
                 TeamFlag(Team::Enemy),
                 Sprite {
-                    image: assets.load("textures/enemies/Slime_Blue.png"),
+                    image: assets.sprite.clone(),
                     custom_size: Some(Vec2::new(32.0, 32.0)),
                     texture_atlas: Some(TextureAtlas {
-                        layout: handle.0.clone(),
+                        layout: assets.layout.clone(),
                         index: 0,
                     }),
                     ..default()

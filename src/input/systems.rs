@@ -1,7 +1,7 @@
 use crate::actor::*;
 use crate::input::*;
 
-#[add_system(schedule = Update, plugin = InputPlugin)]
+#[add_system(schedule = Update, plugin = InputPlugin, run_if = in_state(GameState::InGame))]
 fn handle_input(mut query: Query<(&mut Transform, &ActionState<Action>, &Speed)>, time: Res<Time>) {
     debug!("Handling player input");
     for (mut transform, action_state, speed) in query.iter_mut() {

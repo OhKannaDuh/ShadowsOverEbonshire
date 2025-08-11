@@ -7,7 +7,7 @@ use crate::input::Action;
 use crate::player::Player;
 use crate::player::PlayerPlugin;
 
-#[add_system(schedule = Startup, plugin = PlayerPlugin)]
+#[add_system(schedule = OnEnter(GameState::InGame), plugin = PlayerPlugin)]
 fn spawn_player(mut commands: Commands) {
     info!("Spawning player");
 
@@ -25,7 +25,7 @@ fn spawn_player(mut commands: Commands) {
     ));
 }
 
-#[add_system(schedule = Update, plugin = PlayerPlugin)]
+#[add_system(schedule = Update, plugin = PlayerPlugin, run_if = in_state(GameState::InGame))]
 fn check_player_health(query: Query<&Health, With<Player>>) {
     for health in query.iter() {
         if health.current <= 0.0 {
@@ -35,7 +35,7 @@ fn check_player_health(query: Query<&Health, With<Player>>) {
 }
 
 // @debug
-// #[add_system(schedule = Update, plugin = PlayerPlugin)]
+// #[add_system(schedule = Update, plugin = PlayerPlugin, run_if = in_state(GameState::InGame))]
 fn drain_health(mut query: Query<&mut Health, With<Player>>, time: Res<Time>) {
     let delta = time.delta_secs();
 

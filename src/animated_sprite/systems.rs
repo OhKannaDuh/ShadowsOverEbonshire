@@ -1,6 +1,6 @@
 use crate::animated_sprite::*;
 
-#[add_system(schedule = Update, plugin = AnimatedSpritePlugin)]
+#[add_system(schedule = Update, plugin = AnimatedSpritePlugin, run_if = in_state(GameState::InGame))]
 fn animate_sprite(mut query: Query<(&mut AnimatedSprite, &mut Sprite)>, time: Res<Time>) {
     for (mut animated, mut sprite) in query.iter_mut() {
         let Some(atlas) = sprite.texture_atlas.as_mut() else {

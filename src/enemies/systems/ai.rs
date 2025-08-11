@@ -2,7 +2,7 @@ use crate::actor::*;
 use crate::enemies::*;
 use crate::player::*;
 
-#[add_system(schedule = Update, plugin = EnemyPlugin)]
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
 fn update_enemy_ai(
     mut query: Query<(&mut Transform, &EnemyAi, &Speed), (With<Enemy>, Without<Player>)>,
     player_query: Query<&Transform, With<Player>>,

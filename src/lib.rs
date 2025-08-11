@@ -1,6 +1,14 @@
 mod prelude;
 use crate::prelude::*;
 
+#[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
+pub enum GameState {
+    #[default]
+    Loading,
+    // MainMenu,
+    InGame,
+}
+
 // Components
 mod animated_sprite;
 
@@ -18,23 +26,15 @@ mod player;
 #[add_plugin(to_plugin = Core)]
 pub(crate) struct CorePlugins;
 
+#[butler_plugin_group]
+#[add_plugin(to_plugin = Core)]
+pub(crate) struct GameplayPlugins;
+
 pub struct Core;
 
 #[butler_plugin]
 impl Plugin for Core {
     fn build(&self, app: &mut App) {
-        app.add_plugins(
-            DefaultPlugins
-                .set(WindowPlugin {
-                    primary_window: Some(Window {
-                        title: String::from("VS Alpha"),
-                        ..default()
-                    }),
-                    ..default()
-                })
-                .set(ImagePlugin::default_nearest()),
-        );
-
         #[cfg(debug_assertions)]
         {
             use bevy::{

@@ -1,13 +1,13 @@
 use crate::actor::*;
 
-#[add_system(schedule = Update, plugin = ActorPlugin)]
+#[add_system(schedule = Update, plugin = ActorPlugin, run_if = in_state(GameState::InGame))]
 fn add_health_bar_to_actor(query: Query<Entity, Added<Actor>>, mut commands: Commands) {
     for entity in query.iter() {
         HealthBar::add_to_entity(entity, &mut commands);
     }
 }
 
-#[add_system(schedule = Update, plugin = ActorPlugin)]
+#[add_system(schedule = Update, plugin = ActorPlugin, run_if = in_state(GameState::InGame))]
 fn update_health_bars(
     actors: Query<(&Health, &Children)>,
     mut health_bar_query: Query<&mut Sprite, With<HealthBar>>,
@@ -25,7 +25,7 @@ fn update_health_bars(
     }
 }
 
-// #[add_system(schedule = Update, plugin = ActorPlugin)]
+// #[add_system(schedule = Update, plugin = ActorPlugin, run_if = in_state(GameState::InGame))]
 // fn check_non_player_actor_health(query: Query<&Health, (With<Actor>, Without<Player>)>) {
 //     for health in query.iter() {
 //         if health.current <= 0.0 {

@@ -11,7 +11,7 @@ use crate::player::*;
 mod ai;
 mod spawner;
 
-#[add_system(schedule = Update, plugin = EnemyPlugin)]
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
 fn update_enemy_ai(
     mut params: ParamSet<(
         Query<
@@ -100,7 +100,7 @@ fn update_enemy_ai(
     }
 }
 
-#[add_system(schedule = Update, plugin = EnemyPlugin)]
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
 fn apply_contact_damage(
     mut player_query: Query<(&Transform, &Aabb, &mut Health), (With<Player>, Without<Enemy>)>,
     enemy_query: Query<(&Transform, &Aabb, &ContactDamage), (With<Enemy>, Without<Player>)>,
@@ -149,7 +149,7 @@ fn apply_contact_damage(
     }
 }
 
-#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = on_timer(Duration::from_secs_f32(0.2)))]
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = on_timer(Duration::from_secs_f32(0.2)), run_if = in_state(GameState::InGame))]
 fn update_enemy_kd_tree(
     mut tree: ResMut<EnemyKdTree>,
     enemy_query: Query<(&Transform, Entity), With<Enemy>>,
