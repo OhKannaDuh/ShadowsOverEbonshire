@@ -1,4 +1,5 @@
 mod prelude;
+
 use crate::prelude::*;
 
 #[derive(States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
@@ -37,17 +38,21 @@ impl Plugin for Core {
     fn build(&self, app: &mut App) {
         #[cfg(debug_assertions)]
         {
-            use bevy::{
-                diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-                remote::{RemotePlugin, http::RemoteHttpPlugin},
-            };
-
             app.add_plugins((
-                RemotePlugin::default(),
-                RemoteHttpPlugin::default(),
-                FrameTimeDiagnosticsPlugin::default(),
-                LogDiagnosticsPlugin::default(),
+                bevy::remote::RemotePlugin::default(),
+                bevy::remote::http::RemoteHttpPlugin::default(),
+                bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
+                bevy::diagnostic::EntityCountDiagnosticsPlugin,
+                bevy::diagnostic::SystemInformationDiagnosticsPlugin,
+                bevy::render::diagnostic::RenderDiagnosticsPlugin,
+                iyes_perf_ui::PerfUiPlugin,
             ));
+
+            fn add_performance_ui(mut commands: Commands) {
+                commands.spawn(iyes_perf_ui::prelude::PerfUiAllEntries::default());
+            }
+
+            app.add_systems(Startup, add_performance_ui);
         }
     }
 }
