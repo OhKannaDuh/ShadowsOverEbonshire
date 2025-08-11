@@ -1,8 +1,8 @@
 use crate::prelude::*;
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
-#[actionlike(DualAxis)]
 pub enum Action {
+    #[actionlike(DualAxis)]
     Move,
 }
 

@@ -2,30 +2,24 @@ use crate::prelude::*;
 
 use crate::entity::GameEntity;
 
-#[derive(Component, Reflect, Debug, Default)]
-#[reflect(Component)]
-pub struct Speed(pub f32);
+mod speed;
+pub(crate) use speed::Speed;
 
-#[derive(Component, Reflect, Debug, Default)]
-#[reflect(Component)]
-pub struct Health {
-    pub max: f32,
-    pub current: f32,
-}
+mod health;
+pub(crate) use health::Health;
+pub(crate) use health::HealthBar;
 
-#[derive(Reflect, Debug, Default)]
-pub enum Team {
-    #[default]
-    Neutral,
-    Player,
-    Enemy,
-}
-
-#[derive(Component, Reflect, Debug, Default)]
-#[reflect(Component)]
-pub struct TeamFlag(pub Team);
+mod team_flag;
+pub(crate) use team_flag::Team;
+pub(crate) use team_flag::TeamFlag;
 
 #[derive(Component, Reflect, Debug, Default)]
 #[reflect(Component)]
 #[require(Speed, Health, TeamFlag, GameEntity)]
 pub struct Actor;
+
+#[butler_plugin]
+#[add_plugin(to_group = CorePlugins)]
+struct ActorPlugin;
+
+mod systems;
