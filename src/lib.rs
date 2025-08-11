@@ -1,8 +1,9 @@
 mod prelude;
 use crate::prelude::*;
 
-// Graphics
+// Systems
 mod camera;
+mod input;
 
 // Entities
 mod actor;
