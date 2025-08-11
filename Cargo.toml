@@ -21,6 +21,9 @@ bevy-butler = "0.6.2"
 leafwing-input-manager = "0.17.1"
 kd-tree = "0.6.1"
 typenum = "1.18.0"
+bevy_asset_loader = { version = "0.23.0", features = ["2d", "progress_tracking", "standard_dynamic_assets"] }
+bevy_common_assets = { version = "0.13.0-rc.1", features = ["json", "ron"] }
+iyes_perf_ui = "0.5.0"
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.

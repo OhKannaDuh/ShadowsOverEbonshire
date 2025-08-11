@@ -18,5 +18,36 @@ mod player;
 #[add_plugin(to_plugin = Core)]
 pub(crate) struct CorePlugins;
 
-#[butler_plugin]
 pub struct Core;
+
+#[butler_plugin]
+impl Plugin for Core {
+    fn build(&self, app: &mut App) {
+        app.add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        title: String::from("VS Alpha"),
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(ImagePlugin::default_nearest()),
+        );
+
+        #[cfg(debug_assertions)]
+        {
+            use bevy::{
+                diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+                remote::{RemotePlugin, http::RemoteHttpPlugin},
+            };
+
+            app.add_plugins((
+                RemotePlugin::default(),
+                RemoteHttpPlugin::default(),
+                FrameTimeDiagnosticsPlugin::default(),
+                LogDiagnosticsPlugin::default(),
+            ));
+        }
+    }
+}
