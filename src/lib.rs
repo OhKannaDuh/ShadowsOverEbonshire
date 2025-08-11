@@ -44,7 +44,7 @@ impl Plugin for Core {
                 bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
                 bevy::diagnostic::EntityCountDiagnosticsPlugin,
                 bevy::diagnostic::SystemInformationDiagnosticsPlugin,
-                bevy::render::diagnostic::RenderDiagnosticsPlugin,
+                // bevy::render::diagnostic::RenderDiagnosticsPlugin,
                 iyes_perf_ui::PerfUiPlugin,
             ));
 

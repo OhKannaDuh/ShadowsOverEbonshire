@@ -11,18 +11,17 @@ use crate::player::*;
 mod ai;
 mod spawner;
 
-#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = on_timer(Duration::from_secs_f32(0.2)), run_if = in_state(GameState::InGame))]
 fn update_enemy_ai(
     mut params: ParamSet<(
         Query<
-            (Entity, &mut Transform, &EnemyAi, &Speed, &mut Velocity),
+            (Entity, &Transform, &EnemyAi, &Speed, &mut Velocity),
             (With<Enemy>, Without<Player>),
         >,
         Query<(Entity, &Transform), (With<Enemy>, Without<Player>)>,
     )>,
     player_query: Query<&Transform, With<Player>>,
     tree: Res<EnemyKdTree>,
-    time: Res<Time>,
 ) {
     let player_transform = player_query.single().expect("No player found");
 
@@ -38,7 +37,7 @@ fn update_enemy_ai(
     let max_speed = 200.0;
     let smoothing_factor = 0.15;
 
-    for (entity, mut transform, enemy_ai, speed, mut velocity) in params.p0().iter_mut() {
+    for (entity, transform, enemy_ai, speed, mut velocity) in params.p0().iter_mut() {
         match enemy_ai.0 {
             EnemyAiType::Basic => {
                 let pos_2d = [transform.translation.x, transform.translation.y];
@@ -80,10 +79,8 @@ fn update_enemy_ai(
 
                 let desired_velocity = (to_player_dir + separation).normalize_or_zero() * speed.0;
 
-                // Smooth velocity interpolation
                 velocity.0 = velocity.0.lerp(desired_velocity, smoothing_factor);
 
-                // Clamp max speed in XY plane (keep Z velocity as is, or zero)
                 let horizontal_speed = Vec3::new(velocity.0.x, velocity.0.y, 0.0);
                 let speed_len = horizontal_speed.length();
                 if speed_len > max_speed {
@@ -91,12 +88,15 @@ fn update_enemy_ai(
                     velocity.0.x = clamped.x;
                     velocity.0.y = clamped.y;
                 }
-
-                // Apply velocity to position (ignore Z movement)
-                transform.translation.x += velocity.0.x * time.delta_secs();
-                transform.translation.y += velocity.0.y * time.delta_secs();
             }
         }
+    }
+}
+
+#[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
+fn move_enemies(time: Res<Time>, mut query: Query<(&mut Transform, &Velocity), With<Enemy>>) {
+    for (mut transform, velocity) in &mut query {
+        transform.translation += velocity.0 * time.delta_secs();
     }
 }
 
