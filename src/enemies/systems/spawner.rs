@@ -82,6 +82,9 @@ fn spawn_enemies(
                     current_frame: 0,
                     timer: Timer::from_seconds(0.1, TimerMode::Repeating),
                 },
+                ShowAabbGizmo {
+                    color: Some(Color::srgb(1.0, 0.0, 0.0)),
+                },
                 Speed(64.0),
                 Aabb::from_min_max(Vec3::new(-16.0, -16.0, 0.0), Vec3::new(16.0, 16.0, 0.0)),
                 Transform::from_translation(random_point_around_position(

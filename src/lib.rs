@@ -12,6 +12,7 @@ pub enum GameState {
 
 // Components
 mod animated_sprite;
+mod weapons;
 
 // Systems
 mod camera;

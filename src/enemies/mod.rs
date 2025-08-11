@@ -20,7 +20,7 @@ pub(crate) use assets::*;
 #[derive(Component, Reflect, Debug, Default)]
 #[reflect(Component)]
 #[require(Actor, ContactDamage, EnemyAi, Velocity)]
-struct Enemy;
+pub struct Enemy;
 
 #[add_plugin(to_group = CorePlugins)]
 struct EnemyPlugin;

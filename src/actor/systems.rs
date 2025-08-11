@@ -24,12 +24,3 @@ fn update_health_bars(
         }
     }
 }
-
-// #[add_system(schedule = Update, plugin = ActorPlugin, run_if = in_state(GameState::InGame))]
-// fn check_non_player_actor_health(query: Query<&Health, (With<Actor>, Without<Player>)>) {
-//     for health in query.iter() {
-//         if health.current <= 0.0 {
-//             info!("Non-player actor health reached zero!");
-//         }
-//     }
-// }

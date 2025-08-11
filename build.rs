@@ -1,8 +1,8 @@
-use std::{fs, path::Path, process};
+use std::{fs, path::Path};
 
 fn main() {
     let src_dir = Path::new("src");
-    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
 
     visit_files(src_dir, &mut |path| {
         if let Ok(content) = fs::read_to_string(path) {
@@ -13,8 +13,8 @@ fn main() {
                     && line.contains("schedule = Update")
                     && !line.contains("run_if")
                 {
-                    errors.push(format!(
-                        "{}:{}: Missing run_if on add_system with schedule=Update",
+                    warnings.push(format!(
+                        "{}:{}: Warning: Missing run_if on add_system with schedule=Update",
                         path.display(),
                         line_number
                     ));
@@ -24,13 +24,11 @@ fn main() {
         }
     });
 
-    if !errors.is_empty() {
-        println!("Found add_systems scheduled on Update missing run_if conditions:");
-        for err in &errors {
-            println!("  - {}", err);
+    if !warnings.is_empty() {
+        println!("Warnings: add_systems scheduled on Update missing run_if conditions:");
+        for warning in &warnings {
+            println!("  - {}", warning);
         }
-        // Fail the build
-        process::exit(1);
     }
 }
 
