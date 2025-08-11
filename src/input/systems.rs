@@ -1,8 +1,5 @@
-use crate::prelude::*;
-
-use crate::actor::Speed;
-use crate::input::Action;
-use crate::input::InputPlugin;
+use crate::actor::*;
+use crate::input::*;
 
 #[add_system(schedule = Update, plugin = InputPlugin)]
 fn handle_input(mut query: Query<(&mut Transform, &ActionState<Action>, &Speed)>, time: Res<Time>) {

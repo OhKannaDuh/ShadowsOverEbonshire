@@ -2970,6 +2970,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "kd-tree"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10cba89e4275e55bed515724fd6d7888861c1afb9e3a1ef2c4b001b1894b41c7"
+dependencies = [
+ "num-traits",
+ "ordered-float 5.0.0",
+ "paste",
+ "typenum",
+]
+
+[[package]]
 name = "khronos-egl"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3774,6 +3786,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ordered-float"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2c1f9f56e534ac6a9b8a4600bdf0f530fb393b5f393e7b4d03489c3cf0c3f01"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "overload"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4569,10 +4590,12 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy-butler",
+ "kd-tree",
  "leafwing-input-manager",
  "log",
  "rand",
  "tracing",
+ "typenum",
 ]
 
 [[package]]
@@ -5307,7 +5330,7 @@ dependencies = [
  "ndk-sys 0.5.0+25.2.9519653",
  "objc",
  "once_cell",
- "ordered-float",
+ "ordered-float 4.6.0",
  "parking_lot",
  "profiling",
  "range-alloc",

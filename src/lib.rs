@@ -1,6 +1,9 @@
 mod prelude;
 use crate::prelude::*;
 
+// Components
+mod animated_sprite;
+
 // Systems
 mod camera;
 mod input;

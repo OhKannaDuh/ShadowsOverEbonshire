@@ -1,10 +1,4 @@
-use crate::prelude::*;
-
-use crate::actor::Actor;
-use crate::actor::ActorPlugin;
-use crate::actor::Health;
-use crate::actor::HealthBar;
-use crate::player::Player;
+use crate::actor::*;
 
 #[add_system(schedule = Update, plugin = ActorPlugin)]
 fn add_health_bar_to_actor(query: Query<Entity, Added<Actor>>, mut commands: Commands) {

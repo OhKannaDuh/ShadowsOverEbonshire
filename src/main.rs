@@ -1,5 +1,6 @@
 use bevy::{
     DefaultPlugins,
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
     remote::{RemotePlugin, http::RemoteHttpPlugin},
     render::texture::ImagePlugin,
@@ -21,6 +22,8 @@ fn main() {
             .set(ImagePlugin::default_nearest()),
         RemotePlugin::default(),
         RemoteHttpPlugin::default(),
+        FrameTimeDiagnosticsPlugin::default(),
+        LogDiagnosticsPlugin::default(),
     ));
 
     app.add_plugins(survivor_like::Core);

@@ -21,6 +21,7 @@ fn spawn_player(mut commands: Commands) {
             ..default()
         },
         Action::default_input_map(),
+        // Aabb::from_min_max(Vec3::new(-16.0, -16.0, 0.0), Vec3::new(16.0, 16.0, 0.0)),
     ));
 }
 
@@ -34,7 +35,7 @@ fn check_player_health(query: Query<&Health, With<Player>>) {
 }
 
 // @debug
-#[add_system(schedule = Update, plugin = PlayerPlugin)]
+// #[add_system(schedule = Update, plugin = PlayerPlugin)]
 fn drain_health(mut query: Query<&mut Health, With<Player>>, time: Res<Time>) {
     let delta = time.delta_secs();
 

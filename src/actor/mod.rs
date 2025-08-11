@@ -3,15 +3,13 @@ use crate::prelude::*;
 use crate::entity::GameEntity;
 
 mod speed;
-pub(crate) use speed::Speed;
+pub(crate) use speed::*;
 
 mod health;
-pub(crate) use health::Health;
-pub(crate) use health::HealthBar;
+pub(crate) use health::*;
 
 mod team_flag;
-pub(crate) use team_flag::Team;
-pub(crate) use team_flag::TeamFlag;
+pub(crate) use team_flag::*;
 
 #[derive(Component, Reflect, Debug, Default)]
 #[reflect(Component)]

@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 mod action;
-pub(crate) use action::Action;
+pub(crate) use action::*;
 
 #[add_plugin(to_group = CorePlugins)]
 pub struct InputPlugin;
