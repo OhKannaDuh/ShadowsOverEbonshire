@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use crate::world::*;
-use bevy_simple_tilemap::Tile;
+use bevy_ecs_tilemap::prelude::*;
 use noise::{NoiseFn, Perlin};
 
 const DEFAULT_SEED: u32 = 123456789;
@@ -16,23 +16,31 @@ pub struct WorldGeneratationConfig {
 
     pub chunk_width_i32: i32,
     pub chunk_height_i32: i32,
-    pub chunk_width_usize: usize,
-    pub chunk_height_usize: usize,
+
+    pub tilemap_size: TilemapSize,
+    pub tilemap_tile_size: TilemapTileSize,
+    pub tilemap_grid_size: TilemapGridSize,
 }
 
 impl Default for WorldGeneratationConfig {
     fn default() -> Self {
+        let chunk_width = 64;
+        let chunk_height = 64;
+        let tile_size = 32.0;
+
         WorldGeneratationConfig {
             seed: DEFAULT_SEED,
-            chunk_width: 64,
-            chunk_height: 64,
-            tile_size: 32.0,
-            load_radius: 2,
+            chunk_width,
+            chunk_height,
+            tile_size,
+            load_radius: 1,
 
             chunk_width_i32: 64,
             chunk_height_i32: 64,
-            chunk_width_usize: 64,
-            chunk_height_usize: 64,
+
+            tilemap_size: TilemapSize::new(chunk_width, chunk_height),
+            tilemap_tile_size: TilemapTileSize::new(tile_size, tile_size),
+            tilemap_grid_size: TilemapGridSize::new(tile_size, tile_size),
         }
     }
 }
@@ -62,20 +70,7 @@ impl WorldGenerator {
 
         let base = self.noise.get([nx, ny]) as f32;
 
-        let mut height = (base + 1.0) / 2.0;
-
-        let flat_radius = 128.0;
-        let dist = ((world_x.pow(2) + world_y.pow(2)) as f32).sqrt();
-        if dist < flat_radius {
-            let t = dist / flat_radius;
-            let flat_val = 0.5;
-            height = height * t + flat_val * (1.0 - t);
-        }
-
-        let sea_level = 0.3;
-        if height < sea_level {
-            height = sea_level - ((sea_level - height) * 0.5);
-        }
+        let height = (base + 1.0) / 2.0;
 
         height.clamp(0.0, 1.0)
     }
@@ -92,34 +87,55 @@ impl WorldGenerator {
 
     pub fn generate_chunk(
         &self,
+        commands: &mut Commands,
         chunk_x: i32,
         chunk_y: i32,
-        config: &Res<WorldGeneratationConfig>,
-    ) -> Vec<(IVec3, Option<Tile>)> {
-        let offset_x = chunk_x * config.chunk_width_i32;
-        let offset_y = chunk_y * config.chunk_height_i32;
+        config: &WorldGeneratationConfig,
+        image: Handle<Image>,
+    ) -> Entity {
+        let tilemap = commands.spawn_empty().id();
 
-        let mut tiles = Vec::with_capacity(config.chunk_width_usize * config.chunk_height_usize);
+        let mut storage = TileStorage::empty(config.tilemap_size);
 
         for y in 0..config.chunk_height {
             for x in 0..config.chunk_width {
-                let wx = offset_x + x as i32;
-                let wy = offset_y + y as i32;
+                let tile_pos = TilePos { x, y };
 
-                let h = self.height_at(wx, wy);
-                let sprite_index = self.tile_for_height(h);
+                let world_x = chunk_x * config.chunk_width_i32 + tile_pos.x as i32;
+                let world_y = chunk_y * config.chunk_height_i32 + tile_pos.y as i32;
 
-                tiles.push((
-                    ivec3(wx, wy, 0),
-                    Some(Tile {
-                        sprite_index,
-                        color: Color::WHITE,
-                        ..default()
-                    }),
-                ));
+                let tile_id = self.tile_for_height(self.height_at(world_x, world_y));
+
+                let tile_entity = commands
+                    .spawn(TileBundle {
+                        position: tile_pos,
+                        texture_index: TileTextureIndex(tile_id),
+                        tilemap_id: TilemapId(tilemap),
+                        ..Default::default()
+                    })
+                    .id();
+                commands.entity(tilemap).add_child(tile_entity);
+                storage.set(&tile_pos, tile_entity);
             }
         }
 
-        tiles
+        commands.entity(tilemap).insert(TilemapBundle {
+            grid_size: config.tilemap_grid_size,
+            size: TilemapSize {
+                x: config.chunk_width,
+                y: config.chunk_height,
+            },
+            storage,
+            texture: TilemapTexture::Single(image.clone()),
+            tile_size: config.tilemap_tile_size,
+            transform: Transform::from_translation(Vec3::new(
+                (chunk_x * config.chunk_width_i32) as f32 * config.tilemap_tile_size.x,
+                (chunk_y * config.chunk_height_i32) as f32 * config.tilemap_tile_size.y,
+                -64.0,
+            )),
+            ..Default::default()
+        });
+
+        tilemap
     }
 }
