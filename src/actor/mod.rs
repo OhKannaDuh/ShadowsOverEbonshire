@@ -17,7 +17,7 @@ pub(crate) use team_flag::*;
 pub struct Actor;
 
 #[butler_plugin]
-#[add_plugin(to_group = CorePlugins)]
+#[add_plugin(to_group = EntityPlugins)]
 struct ActorPlugin;
 
 mod systems;

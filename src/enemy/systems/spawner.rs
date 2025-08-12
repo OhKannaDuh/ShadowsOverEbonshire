@@ -4,7 +4,7 @@ use rand::Rng;
 use crate::actor::*;
 use crate::animated_sprite::*;
 use crate::camera::MainCamera;
-use crate::enemies::*;
+use crate::enemy::*;
 use crate::player::*;
 
 #[derive(Resource)]

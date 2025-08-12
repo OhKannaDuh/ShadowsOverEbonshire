@@ -22,7 +22,7 @@ pub(crate) use assets::*;
 #[require(Actor, ContactDamage, EnemyAi, Velocity)]
 pub struct Enemy;
 
-#[add_plugin(to_group = CorePlugins)]
+#[add_plugin(to_group = EntityPlugins)]
 struct EnemyPlugin;
 
 #[butler_plugin]

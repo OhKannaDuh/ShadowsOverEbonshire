@@ -1,4 +1,4 @@
-use crate::enemies::*;
+use crate::enemy::*;
 use kd_tree::{KdPoint, KdTree};
 
 #[derive(Component)]

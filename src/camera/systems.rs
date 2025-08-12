@@ -12,7 +12,7 @@ fn spawn_camera(mut commands: Commands) {
         },
         Projection::Orthographic(OrthographicProjection {
             scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 1080.0,
+                viewport_height: 2160.0,
             },
             ..OrthographicProjection::default_2d()
         }),
@@ -89,7 +89,7 @@ fn update_camera(
 
                 let mut new_height = desired_width / aspect_ratio;
                 new_height = new_height.max(desired_height);
-                new_height = new_height.max(1080.0);
+                new_height = new_height.max(2160.0);
 
                 *viewport_height = new_height;
             }

@@ -20,7 +20,7 @@ impl Default for CameraFocus {
 }
 
 #[butler_plugin]
-#[add_plugin(to_group = CorePlugins)]
+#[add_plugin(to_group = RenderingPlugins)]
 struct CameraPlugin;
 
 mod systems;

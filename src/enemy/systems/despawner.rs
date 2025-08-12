@@ -1,5 +1,5 @@
 use crate::actor::*;
-use crate::enemies::*;
+use crate::enemy::*;
 use crate::prelude::*;
 
 #[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]

@@ -7,7 +7,7 @@ use crate::actor::TeamFlag;
 use crate::input::Action;
 use crate::player::Player;
 use crate::player::PlayerPlugin;
-use crate::weapons::components::*;
+use crate::weapon::components::*;
 
 #[add_system(schedule = OnEnter(GameState::InGame), plugin = PlayerPlugin)]
 fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
@@ -63,7 +63,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
             ShowAabbGizmo {
                 color: Some(Color::srgb(0.0, 1.0, 0.0)),
             },
-            Speed(512.0),
+            Speed(256.0),
         ))
         .add_child(weapon_entity);
 }

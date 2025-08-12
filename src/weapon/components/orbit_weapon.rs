@@ -1,7 +1,7 @@
 use bevy::platform::collections::HashMap;
 
 use crate::prelude::*;
-use crate::weapons::components::*;
+use crate::weapon::components::*;
 
 #[derive(Component)]
 #[require(Sprite)]

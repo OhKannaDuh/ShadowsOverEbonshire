@@ -22,11 +22,11 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .init_state::<survivor_like::GameState>()
+        .init_state::<shadows_over_ebonshire::GameState>()
         .add_loading_state(
-            LoadingState::new(survivor_like::GameState::Loading)
-                .continue_to_state(survivor_like::GameState::InGame),
+            LoadingState::new(shadows_over_ebonshire::GameState::Loading)
+                .continue_to_state(shadows_over_ebonshire::GameState::InGame),
         )
-        .add_plugins(survivor_like::Core)
+        .add_plugins(shadows_over_ebonshire::Core)
         .run();
 }

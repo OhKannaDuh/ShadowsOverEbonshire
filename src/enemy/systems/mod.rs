@@ -1,7 +1,7 @@
 use kd_tree::KdTree;
 
 use crate::actor::*;
-use crate::enemies::*;
+use crate::enemy::*;
 use crate::player::*;
 
 mod ai;

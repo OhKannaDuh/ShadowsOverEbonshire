@@ -1,15 +1,11 @@
 [package]
-name = "survivor_like"
+name = "shadows_over_ebonshire"
 authors = ["OhKannaDuh <uimokd@gmail.com>"]
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bevy = { version = "0.16", features = [
-    "bevy_remote",
-    "trace_tracy",
-    "wayland",
-] }
+bevy = { version = "0.16", features = ["bevy_remote", "wayland"] }
 rand = "0.8"
 # Compile low-severity logs out of native builds for performance.
 log = { version = "0.4", features = [
@@ -32,6 +28,8 @@ bevy_asset_loader = { version = "0.23.0", features = [
 ] }
 bevy_common_assets = { version = "0.13.0-rc.1", features = ["json", "ron"] }
 iyes_perf_ui = "0.5.0"
+bevy_simple_tilemap = "0.17.1"
+noise = "0.9.0"
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.

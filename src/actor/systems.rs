@@ -7,7 +7,7 @@ fn add_health_bar_to_actor(query: Query<Entity, Added<Actor>>, mut commands: Com
     }
 }
 
-#[add_system(schedule = Update, plugin = ActorPlugin, run_if = in_state(GameState::InGame))]
+// #[add_system(schedule = Update, plugin = ActorPlugin, run_if = in_state(GameState::InGame))]
 fn update_health_bars(
     actors: Query<(&Health, &Children)>,
     mut health_bar_query: Query<&mut Sprite, With<HealthBar>>,

@@ -1,7 +1,7 @@
 use crate::actor::*;
-use crate::enemies::*;
+use crate::enemy::*;
 use crate::prelude::*;
-use crate::weapons::*;
+use crate::weapon::*;
 
 #[add_system(schedule = Update, plugin = WeaponPlugin, run_if = in_state(GameState::InGame))]
 fn spawn_orbit_satellites(

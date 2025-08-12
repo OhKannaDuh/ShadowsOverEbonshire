@@ -2,7 +2,7 @@ use crate::actor::*;
 use crate::camera::*;
 use crate::input::*;
 use crate::prelude::*;
-use crate::weapons::components::*;
+use crate::weapon::components::*;
 
 #[derive(Component, Reflect, Debug, Default)]
 #[reflect(Component)]
@@ -14,7 +14,7 @@ pub struct Experience(pub f32);
 pub struct Player;
 
 #[butler_plugin]
-#[add_plugin(to_group = CorePlugins)]
+#[add_plugin(to_group = EntityPlugins)]
 struct PlayerPlugin;
 
 mod systems;

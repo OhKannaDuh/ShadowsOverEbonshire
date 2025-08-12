@@ -4,8 +4,9 @@ use bevy::platform::collections::HashMap;
 use bevy::time::common_conditions::on_timer;
 
 use crate::actor::*;
-use crate::enemies::*;
+use crate::enemy::*;
 use crate::player::*;
+
 #[add_system(schedule = Update, plugin = EnemyPlugin, run_if = on_timer(Duration::from_secs_f32(0.2)), run_if = in_state(GameState::InGame))]
 fn update_enemy_ai(
     mut params: ParamSet<(

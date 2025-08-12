@@ -12,15 +12,16 @@ pub enum GameState {
 
 // Components
 mod animated_sprite;
-mod weapons;
+mod weapon;
 
 // Systems
 mod camera;
 mod input;
+mod world;
 
 // Entities
 mod actor;
-mod enemies;
+mod enemy;
 mod entity;
 mod player;
 
@@ -30,7 +31,11 @@ pub(crate) struct CorePlugins;
 
 #[butler_plugin_group]
 #[add_plugin(to_plugin = Core)]
-pub(crate) struct GameplayPlugins;
+pub(crate) struct EntityPlugins;
+
+#[butler_plugin_group]
+#[add_plugin(to_plugin = Core)]
+pub(crate) struct RenderingPlugins;
 
 pub struct Core;
 
