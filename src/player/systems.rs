@@ -66,22 +66,6 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
             Speed(512.0),
         ))
         .add_child(weapon_entity);
-
-    commands.spawn((
-        Player,
-        Name::new("Player 2"),
-        TeamFlag(Team::Player),
-        Sprite {
-            color: Color::srgb(1.0, 0.0, 1.0),
-            custom_size: Some(Vec2::new(32.0, 32.0)),
-            ..default()
-        },
-        InputMap::<Action>::default(),
-        EquippedWeapons(vec![]),
-        ShowAabbGizmo {
-            color: Some(Color::srgb(0.0, 1.0, 0.0)),
-        },
-    ));
 }
 
 #[add_system(schedule = Update, plugin = PlayerPlugin, run_if = in_state(GameState::InGame))]
