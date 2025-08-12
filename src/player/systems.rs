@@ -1,4 +1,5 @@
 use crate::actor::Health;
+use crate::actor::Speed;
 use crate::prelude::*;
 
 use crate::actor::Team;
@@ -33,7 +34,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
         .spawn((
             Name::new("Orbit Weapon"),
             OrbitAndLungeWeapon {
-                orbit_speed: 1.0,
+                orbit_speed: 6.4,
                 orbit_radius: 100.0,
                 orbit_direction: OrbitDirection::Clockwise,
                 satellite_count: 12,
@@ -62,8 +63,25 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
             ShowAabbGizmo {
                 color: Some(Color::srgb(0.0, 1.0, 0.0)),
             },
+            Speed(512.0),
         ))
         .add_child(weapon_entity);
+
+    commands.spawn((
+        Player,
+        Name::new("Player 2"),
+        TeamFlag(Team::Player),
+        Sprite {
+            color: Color::srgb(1.0, 0.0, 1.0),
+            custom_size: Some(Vec2::new(32.0, 32.0)),
+            ..default()
+        },
+        InputMap::<Action>::default(),
+        EquippedWeapons(vec![]),
+        ShowAabbGizmo {
+            color: Some(Color::srgb(0.0, 1.0, 0.0)),
+        },
+    ));
 }
 
 #[add_system(schedule = Update, plugin = PlayerPlugin, run_if = in_state(GameState::InGame))]

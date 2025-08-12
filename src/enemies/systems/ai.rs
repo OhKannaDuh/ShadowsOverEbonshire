@@ -6,7 +6,6 @@ use bevy::time::common_conditions::on_timer;
 use crate::actor::*;
 use crate::enemies::*;
 use crate::player::*;
-
 #[add_system(schedule = Update, plugin = EnemyPlugin, run_if = on_timer(Duration::from_secs_f32(0.2)), run_if = in_state(GameState::InGame))]
 fn update_enemy_ai(
     mut params: ParamSet<(
@@ -19,7 +18,11 @@ fn update_enemy_ai(
     player_query: Query<&Transform, With<Player>>,
     tree: Res<EnemyKdTree>,
 ) {
-    let player_transform = player_query.single().expect("No player found");
+    // Early out if no players at all
+    let player_transforms: Vec<Vec3> = player_query.iter().map(|t| t.translation).collect();
+    if player_transforms.is_empty() {
+        return;
+    }
 
     // Cache enemy positions for neighbor lookups
     let enemy_transforms: HashMap<Entity, Vec3> = params
@@ -39,7 +42,7 @@ fn update_enemy_ai(
                 let pos_2d = [transform.translation.x, transform.translation.y];
                 let neighbors = tree.0.within_radius(&pos_2d, separation_distance);
 
-                // Separation as Vec3, ignoring Z axis (assuming movement on XY plane)
+                // Separation vector (avoid crowding)
                 let mut separation = Vec3::ZERO;
                 let mut neighbor_count = 0;
 
@@ -51,7 +54,6 @@ fn update_enemy_ai(
                         let to_me = transform.translation - *neighbor_pos;
                         let dist = to_me.length();
                         if dist > 0.0 && dist < separation_distance {
-                            // Weighted repulsion, ignore Z
                             let strength = (1.0 - (dist / separation_distance)).powi(2);
                             let to_me_xy = Vec3::new(to_me.x, to_me.y, 0.0).normalize() * strength;
                             separation += to_me_xy;
@@ -65,8 +67,19 @@ fn update_enemy_ai(
                     separation = separation.normalize_or_zero() * separation_strength;
                 }
 
-                let to_player = player_transform.translation - transform.translation;
-                let to_player_xy = Vec3::new(to_player.x, to_player.y, 0.0);
+                // Find nearest player
+                let mut nearest_player_dir = Vec3::ZERO;
+                let mut nearest_dist_sq = f32::MAX;
+                for &player_pos in &player_transforms {
+                    let to_player = player_pos - transform.translation;
+                    let dist_sq = to_player.length_squared();
+                    if dist_sq < nearest_dist_sq {
+                        nearest_dist_sq = dist_sq;
+                        nearest_player_dir = to_player;
+                    }
+                }
+
+                let to_player_xy = Vec3::new(nearest_player_dir.x, nearest_player_dir.y, 0.0);
                 let to_player_dir = if to_player_xy.length_squared() > 0.0 {
                     to_player_xy.normalize()
                 } else {

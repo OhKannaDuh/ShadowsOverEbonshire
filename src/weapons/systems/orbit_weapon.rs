@@ -1,8 +1,5 @@
-use bevy::gizmos::circles::Ellipse2dBuilder;
-
-use crate::actor::Health;
-use crate::enemies::Enemy;
-use crate::enemies::EnemyKdTree;
+use crate::actor::*;
+use crate::enemies::*;
 use crate::prelude::*;
 use crate::weapons::*;
 
@@ -25,9 +22,9 @@ fn spawn_orbit_satellites(
                         image: weapon_data.satellite_image.clone(),
                         ..default()
                     },
-                    ShowAabbGizmo {
-                        color: Some(Color::srgb(1.0, 0.0, 1.0)),
-                    },
+                    // ShowAabbGizmo {
+                    //     color: Some(Color::srgb(1.0, 0.0, 1.0)),
+                    // },
                     Transform::default(),
                     GlobalTransform::default(),
                 ))

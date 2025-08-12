@@ -1,4 +1,5 @@
 use crate::actor::*;
+use crate::camera::*;
 use crate::input::*;
 use crate::prelude::*;
 use crate::weapons::components::*;
@@ -9,7 +10,7 @@ pub struct Experience(pub f32);
 
 #[derive(Component, Reflect, Debug, Default)]
 #[reflect(Component)]
-#[require(Actor, Experience, InputMap<Action>, EquippedWeapons)]
+#[require(Actor, Experience, InputMap<Action>, EquippedWeapons, CameraFocus)]
 pub struct Player;
 
 #[butler_plugin]

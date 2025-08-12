@@ -36,28 +36,28 @@ fn apply_contact_damage(
             && (delta.z <= a_half.z + b_half.z)
     }
 
-    let (player_transform, player_aabb, mut player_health) =
-        player_query.single_mut().expect("No player found");
+    for (player_transform, player_aabb, mut player_health) in player_query.iter_mut() {
+        let search_radius =
+            (player_aabb.half_extents.x.max(player_aabb.half_extents.y)) * 2.0 + 50.0;
 
-    let search_radius = (player_aabb.half_extents.x.max(player_aabb.half_extents.y)) * 2.0 + 50.0;
+        let player_pos_2d = [
+            player_transform.translation.x,
+            player_transform.translation.y,
+        ];
+        let nearby_enemies = tree.0.within_radius(&player_pos_2d, search_radius);
 
-    let player_pos_2d = [
-        player_transform.translation.x,
-        player_transform.translation.y,
-    ];
-    let nearby_enemies = tree.0.within_radius(&player_pos_2d, search_radius);
-
-    for enemy_collision in nearby_enemies {
-        if let Ok((enemy_transform, enemy_aabb, contact_damage)) =
-            enemy_query.get(enemy_collision.entity)
-        {
-            if aabb_intersects(
-                enemy_aabb,
-                enemy_transform.translation,
-                player_aabb,
-                player_transform.translation,
-            ) {
-                player_health.current -= contact_damage.0 * time.delta_secs();
+        for enemy_collision in nearby_enemies {
+            if let Ok((enemy_transform, enemy_aabb, contact_damage)) =
+                enemy_query.get(enemy_collision.entity)
+            {
+                if aabb_intersects(
+                    enemy_aabb,
+                    enemy_transform.translation,
+                    player_aabb,
+                    player_transform.translation,
+                ) {
+                    player_health.current -= contact_damage.0 * time.delta_secs();
+                }
             }
         }
     }

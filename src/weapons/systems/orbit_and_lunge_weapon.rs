@@ -36,9 +36,9 @@ fn spawn_orbit_and_lunge_satellites(
                         image: weapon_data.satellite_image.clone(),
                         ..default()
                     },
-                    ShowAabbGizmo {
-                        color: Some(Color::srgb(1.0, 0.0, 1.0)),
-                    },
+                    // ShowAabbGizmo {
+                    //     color: Some(Color::srgb(1.0, 0.0, 1.0)),
+                    // },
                     Transform::default(),
                     GlobalTransform::default(),
                 ))
@@ -55,7 +55,7 @@ fn update_orbit_and_lunge_satellites(
     tree: Res<EnemyKdTree>,
     enemy_query: Query<&GlobalTransform, With<Enemy>>,
     mut query: Query<(&mut Transform, &mut OrbitAndLungeSatellite)>,
-    weapon_query: Query<(&OrbitAndLungeWeapon, &GlobalTransform)>, // <-- need weapon world pos
+    weapon_query: Query<(&OrbitAndLungeWeapon, &GlobalTransform)>,
 ) {
     fn rotation_towards(from_world: Vec3, to_world: Vec3) -> Quat {
         let dir = (to_world - from_world).truncate();
@@ -80,26 +80,21 @@ fn update_orbit_and_lunge_satellites(
 
             let orbit_angle = time.elapsed_secs() * weapon.orbit_speed * dir_factor + base_angle;
 
-            // local offset from the weapon's origin (child's local transform)
             let local_orbit_offset = Vec3::new(
                 weapon.orbit_radius * orbit_angle.cos(),
                 weapon.orbit_radius * orbit_angle.sin(),
                 0.0,
             );
 
-            // weapon world position
             let weapon_pos_world = weapon_global.translation();
 
-            // world-space orbit position = weapon world pos + local offset
             let orbit_pos_world = weapon_pos_world + local_orbit_offset;
 
             match satellite.state {
                 LungeState::Idle => {
-                    // Use world-space orbit position when querying KD-tree
                     let pos_2d = [orbit_pos_world.x, orbit_pos_world.y];
                     let nearby_enemies = tree.0.within_radius(&pos_2d, weapon.lunge_range);
 
-                    // Find nearest enemy (enemy_query gives GlobalTransform -> world pos)
                     let nearest_enemy_pos = nearby_enemies
                         .iter()
                         .filter_map(|enemy_collision| enemy_query.get(enemy_collision.entity).ok())
@@ -119,9 +114,7 @@ fn update_orbit_and_lunge_satellites(
                         satellite.cooldown_timer.reset();
                         satellite.hit_entities_this_lunge.clear();
                     } else {
-                        // No target: keep the satellite at the local offset
                         transform.translation = local_orbit_offset;
-                        // rotation can be computed in world-space direction; if parent has no rotation this works:
                         transform.rotation = rotation_towards(orbit_pos_world, weapon_pos_world);
                     }
                 }
@@ -133,15 +126,10 @@ fn update_orbit_and_lunge_satellites(
                             satellite.state = LungeState::Returning;
                         }
 
-                        // Interpolate in world space, then convert to local for the child transform:
                         let lunge_pos_world =
                             orbit_pos_world.lerp(target_pos_world, satellite.progress);
-                        transform.translation = lunge_pos_world - weapon_pos_world; // local
-                        transform.rotation = Quat::from_rotation_z(
-                            (target_pos_world - orbit_pos_world)
-                                .truncate()
-                                .angle_to(Vec2::X),
-                        );
+                        transform.translation = lunge_pos_world - weapon_pos_world;
+                        transform.rotation = rotation_towards(lunge_pos_world, target_pos_world);
                     } else {
                         satellite.state = LungeState::Idle;
                     }
@@ -156,15 +144,10 @@ fn update_orbit_and_lunge_satellites(
                             satellite.cooldown_timer.reset();
                         }
 
-                        // Interpolate back in world space and convert to local
                         let return_pos_world =
                             target_pos_world.lerp(orbit_pos_world, 1.0 - satellite.progress);
-                        transform.translation = return_pos_world - weapon_pos_world; // local
-                        transform.rotation = Quat::from_rotation_z(
-                            (target_pos_world - orbit_pos_world)
-                                .truncate()
-                                .angle_to(Vec2::X),
-                        );
+                        transform.translation = return_pos_world - weapon_pos_world;
+                        transform.rotation = rotation_towards(return_pos_world, weapon_pos_world);
                     } else {
                         satellite.state = LungeState::Idle;
                     }
@@ -197,12 +180,10 @@ fn apply_orbit_and_lunge_weapon_damage(
             continue;
         };
 
-        // Satellite position
         let sat_pos = global_transform.translation();
         let sat_pos_2d = [sat_pos.x, sat_pos.y];
         let radius = aabb.half_extents.max_element();
 
-        // Enemies within hit radius
         let nearby_enemies = tree.0.within_radius(&sat_pos_2d, radius);
 
         for enemy_collision in nearby_enemies {
@@ -221,19 +202,19 @@ fn apply_orbit_and_lunge_weapon_damage(
     }
 }
 
-#[add_system(schedule = Update, plugin = WeaponPlugin, run_if = in_state(GameState::InGame))]
-fn draw_lunge_ranges(
-    mut gizmos: Gizmos,
-    satellite_query: Query<(&GlobalTransform, &OrbitAndLungeSatellite)>,
-    weapon_query: Query<&OrbitAndLungeWeapon>,
-) {
-    for (global_transform, satellite) in &satellite_query {
-        if let Ok(weapon) = weapon_query.get(satellite.weapon) {
-            gizmos.circle_2d(
-                global_transform.translation().truncate(),
-                weapon.lunge_range,
-                Color::srgb(0.0, 1.0, 0.0),
-            );
-        }
-    }
-}
+// #[add_system(schedule = Update, plugin = WeaponPlugin, run_if = in_state(GameState::InGame))]
+// fn draw_lunge_ranges(
+//     mut gizmos: Gizmos,
+//     satellite_query: Query<(&GlobalTransform, &OrbitAndLungeSatellite)>,
+//     weapon_query: Query<&OrbitAndLungeWeapon>,
+// ) {
+//     for (global_transform, satellite) in &satellite_query {
+//         if let Ok(weapon) = weapon_query.get(satellite.weapon) {
+//             gizmos.circle_2d(
+//                 global_transform.translation().truncate(),
+//                 weapon.lunge_range,
+//                 Color::srgb(0.0, 1.0, 0.0),
+//             );
+//         }
+//     }
+// }
