@@ -11,18 +11,36 @@ use crate::weapons::components::*;
 #[add_system(schedule = OnEnter(GameState::InGame), plugin = PlayerPlugin)]
 fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
     info!("Spawning player");
+    // let weapon_entity = commands
+    //     .spawn((
+    //         Name::new("Orbit Weapon"),
+    //         OrbitWeapon {
+    //             orbit_speed: 3.2,
+    //             orbit_radius: 100.0,
+    //             orbit_direction: OrbitDirection::Clockwise,
+    //             satellite_count: 12,
+    //             satellite_image: assets.load("textures/weapons/dagger.png"),
+    //             contact_damage: 100.0,
+    //             contact_cooldown_per_entity: 0.5,
+    //             contact_cooldown_map: Default::default(),
+    //         },
+    //         Transform::default(),
+    //         GlobalTransform::default(),
+    //     ))
+    //     .id();
+
     let weapon_entity = commands
         .spawn((
             Name::new("Orbit Weapon"),
-            OrbitWeapon {
-                orbit_speed: 3.2,
+            OrbitAndLungeWeapon {
+                orbit_speed: 1.0,
                 orbit_radius: 100.0,
                 orbit_direction: OrbitDirection::Clockwise,
                 satellite_count: 12,
                 satellite_image: assets.load("textures/weapons/dagger.png"),
-                contact_damage: 100.0,
-                contact_cooldown_per_entity: 0.5,
-                contact_cooldown_map: Default::default(),
+                lunge_damage: 100.0,
+                lunge_range: 64.0,
+                lunge_cooldown: 1.0,
             },
             Transform::default(),
             GlobalTransform::default(),

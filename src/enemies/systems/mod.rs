@@ -66,13 +66,13 @@ fn apply_contact_damage(
 #[add_system(schedule = Update, plugin = EnemyPlugin, run_if = in_state(GameState::InGame))]
 fn update_enemy_kd_tree(
     mut tree: ResMut<EnemyKdTree>,
-    enemy_query: Query<(&Transform, Entity), With<Enemy>>,
+    enemy_query: Query<(&GlobalTransform, Entity), With<Enemy>>,
 ) {
     let mut items = Vec::new();
-    for (t, e) in enemy_query.iter() {
+    for (gt, e) in enemy_query.iter() {
         items.push(Collision {
             entity: e,
-            pos: t.translation.truncate(),
+            pos: gt.translation().truncate(),
         })
     }
 

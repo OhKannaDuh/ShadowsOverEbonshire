@@ -1,3 +1,5 @@
+use bevy::gizmos::circles::Ellipse2dBuilder;
+
 use crate::actor::Health;
 use crate::enemies::Enemy;
 use crate::enemies::EnemyKdTree;
@@ -15,7 +17,7 @@ fn spawn_orbit_satellites(
             let satellite = commands
                 .spawn((
                     Name::new(format!("Orbit Weapon Satellite {}", i)),
-                    OrbitSatellite {
+                    OrbitWeaponSatellite {
                         index: i,
                         weapon: weapon_entity,
                     },
@@ -39,7 +41,7 @@ fn spawn_orbit_satellites(
 #[add_system(schedule = Update, plugin = WeaponPlugin, run_if = in_state(GameState::InGame))]
 fn update_orbit_satellites(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &OrbitSatellite)>,
+    mut query: Query<(&mut Transform, &OrbitWeaponSatellite)>,
     weapon_query: Query<&OrbitWeapon>,
 ) {
     for (mut transform, satellite) in query.iter_mut() {
@@ -69,15 +71,11 @@ fn update_orbit_satellites(
 
 #[add_system(schedule = Update, plugin = WeaponPlugin, run_if = in_state(GameState::InGame))]
 fn apply_orbit_weapon_damage(
-    mut commands: Commands,
-    time: Res<Time>,
     tree: Res<EnemyKdTree>,
-    satellite_query: Query<(&GlobalTransform, &Aabb, &OrbitSatellite)>,
+    satellite_query: Query<(&GlobalTransform, &Aabb, &OrbitWeaponSatellite)>,
     mut weapon_query: Query<&mut OrbitWeapon>,
     mut enemy_query: Query<&mut Health, With<Enemy>>,
 ) {
-    let now = time.elapsed_secs();
-
     for (global_transform, aabb, satellite) in satellite_query.iter() {
         if let Ok(mut weapon) = weapon_query.get_mut(satellite.weapon) {
             let cooldown = weapon.contact_cooldown_per_entity;
