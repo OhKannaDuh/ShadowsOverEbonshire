@@ -1,5 +1,6 @@
 use bevy::platform::collections::HashMap;
 use bevy::time::common_conditions::on_timer;
+use bevy_ecs_tilemap::tiles::TilePos;
 use std::time::Duration;
 
 use crate::player::*;
@@ -154,4 +155,86 @@ fn draw_chunk_grid(
             Color::srgb(1.0, 1.0, 0.0),
         );
     }
+}
+#[add_system(schedule = OnEnter(GameState::InGame), plugin = WorldPlugin)]
+fn generate_world_image(config: Res<WorldGeneratationConfig>, generator: Res<WorldGenerator>) {
+    use image::{Rgba, RgbaImage};
+
+    info!("Generating world image...");
+
+    let num_chunks_x = 32_i32; // number of chunks in +x and -x directions
+    let num_chunks_y = 32_i32; // same for y
+
+    // total chunks wide/tall
+    let total_chunks_x = num_chunks_x * 2 + 1;
+    let total_chunks_y = num_chunks_y * 2 + 1;
+
+    // Image size in pixels = number of tiles horizontally and vertically
+    let map_width = config.chunk_width * total_chunks_x as u32;
+    let map_height = config.chunk_height * total_chunks_y as u32;
+
+    let mut map_image = RgbaImage::new(map_width, map_height);
+
+    fn tile_id_to_color(tile_id: TileId) -> Rgba<u8> {
+        match tile_id {
+            TileId::Rainforest => Rgba([0, 100, 0, 255]), // Dark green
+            TileId::Savannah => Rgba([189, 183, 107, 255]), // Dark khaki
+            TileId::TropicalSeasonalForest => Rgba([34, 139, 34, 255]), // Forest green
+
+            TileId::Desert => Rgba([237, 201, 175, 255]), // Sandy beige
+            TileId::SemiDesert => Rgba([210, 180, 140, 255]), // Tan
+            TileId::XericShrubland => Rgba([160, 82, 45, 255]), // Sienna
+
+            TileId::Grassland => Rgba([124, 252, 0, 255]), // Lawn green
+            TileId::DeciduousForest => Rgba([34, 139, 34, 255]), // Forest green
+            TileId::TemperateRainforest => Rgba([0, 100, 0, 255]), // Dark green
+            TileId::Mediterranean => Rgba([107, 142, 35, 255]), // Olive drab
+
+            TileId::Taiga => Rgba([46, 139, 87, 255]), // Sea green
+            TileId::BorealForest => Rgba([0, 128, 0, 255]), // Green
+
+            TileId::Tundra => Rgba([176, 196, 222, 255]), // Light steel blue
+            TileId::IceSheet => Rgba([240, 248, 255, 255]), // Alice blue (icy)
+
+            TileId::Mountain => Rgba([139, 137, 137, 255]), // Gray
+            TileId::Swamp => Rgba([47, 79, 47, 255]),       // Dark slate gray
+            TileId::River => Rgba([30, 144, 255, 255]),     // Dodger blue
+
+            TileId::Water => Rgba([0, 0, 255, 255]), // Blue
+            TileId::Sand => Rgba([244, 164, 96, 255]), // Sandy brown
+            TileId::Snow => Rgba([255, 250, 250, 255]), // Snow white
+        }
+    }
+
+    for chunk_y in -num_chunks_y..=num_chunks_y {
+        for chunk_x in -num_chunks_x..=num_chunks_x {
+            info!("Generating chunk at ({}, {})", chunk_x, chunk_y);
+            for tile_y in 0..config.chunk_height {
+                for tile_x in 0..config.chunk_width {
+                    // Calculate world tile coords
+                    let world_x = chunk_x * config.chunk_width as i32 + tile_x as i32;
+                    let world_y = chunk_y * config.chunk_height as i32 + tile_y as i32;
+
+                    let point = Point::new(world_x, world_y, &generator);
+
+                    let color = tile_id_to_color(point.tile_id);
+
+                    // Calculate pixel coordinates in the image
+                    let px = (chunk_x + num_chunks_x) as u32 * config.chunk_width + tile_x;
+                    // Invert y to draw top-to-bottom (optional, depending on coordinate system)
+                    let py = map_height
+                        - 1
+                        - ((chunk_y + num_chunks_y) as u32 * config.chunk_height + tile_y);
+
+                    // Put a single pixel for this tile
+                    map_image.put_pixel(px, py, color);
+                }
+            }
+        }
+    }
+
+    map_image
+        .save("world_map.png")
+        .expect("Failed to save image");
+    info!("World image generated and saved as world_map.png");
 }
