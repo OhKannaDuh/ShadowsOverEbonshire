@@ -30,7 +30,7 @@ mod player;
 pub(crate) struct CorePlugins;
 
 #[butler_plugin_group]
-#[add_plugin(to_plugin = Core)]
+// #[add_plugin(to_plugin = Core)]
 pub(crate) struct EntityPlugins;
 
 #[butler_plugin_group]

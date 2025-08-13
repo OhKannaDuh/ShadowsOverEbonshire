@@ -269,7 +269,7 @@ impl Default for WorldGeneratationConfig {
             chunk_width,
             chunk_height,
             tile_size,
-            load_radius: 1,
+            load_radius: 32,
 
             chunk_width_i32: 64,
             chunk_height_i32: 64,
@@ -445,5 +445,9 @@ impl WorldGenerator {
         });
 
         tilemap
+    }
+
+    pub fn get_point(&self, world_x: i32, world_y: i32) -> Point {
+        Point::new(world_x, world_y, self)
     }
 }

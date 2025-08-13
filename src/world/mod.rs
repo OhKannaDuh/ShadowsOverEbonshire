@@ -19,3 +19,4 @@ impl Plugin for WorldPlugin {
 }
 
 mod systems;
+mod world_gen_tester;

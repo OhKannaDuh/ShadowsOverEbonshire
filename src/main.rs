@@ -16,6 +16,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: String::from("VS Alpha"),
+                        present_mode: bevy::window::PresentMode::Immediate,
                         ..default()
                     }),
                     ..default()

@@ -9,7 +9,7 @@ use crate::world::*;
 
 #[derive(Resource, Default)]
 #[insert_resource(plugin = WorldPlugin)]
-struct ChunkManager(HashMap<(i32, i32), Entity>);
+pub struct ChunkManager(pub HashMap<(i32, i32), Entity>);
 
 fn world_pos_to_chunk_coords(pos: Vec2, config: &WorldGeneratationConfig) -> (i32, i32) {
     let chunk_width_world = config.chunk_width as f32 * config.tile_size;
@@ -20,12 +20,12 @@ fn world_pos_to_chunk_coords(pos: Vec2, config: &WorldGeneratationConfig) -> (i3
     (chunk_x, chunk_y)
 }
 
-#[add_system(
-    schedule = Update,
-    plugin = WorldPlugin,
-    run_if = on_timer(Duration::from_millis(500)),
-    run_if = in_state(GameState::InGame)
-)]
+// #[add_system(
+//     schedule = Update,
+//     plugin = WorldPlugin,
+//     run_if = on_timer(Duration::from_millis(500)),
+//     run_if = in_state(GameState::InGame)
+// )]
 fn load_near_chunks(
     mut commands: Commands,
     player_query: Query<&Transform, With<Player>>,
@@ -66,12 +66,13 @@ fn load_near_chunks(
     }
 }
 
-#[add_system(
-    schedule = Update,
-    plugin = WorldPlugin,
-    run_if = on_timer(Duration::from_millis(500)),
-    run_if = in_state(GameState::InGame),
-    after = load_near_chunks)]
+// #[add_system(
+//     schedule = Update,
+//     plugin = WorldPlugin,
+//     run_if = on_timer(Duration::from_millis(500)),
+//     run_if = in_state(GameState::InGame),
+//     after = load_near_chunks)
+// ]
 fn unload_far_chunks(
     mut commands: Commands,
     player_query: Query<&Transform, With<Player>>,
@@ -108,7 +109,7 @@ fn unload_far_chunks(
     }
 }
 
-#[add_system(schedule = Update, plugin = WorldPlugin, run_if = in_state(GameState::InGame))]
+// #[add_system(schedule = Update, plugin = WorldPlugin, run_if = in_state(GameState::InGame))]
 fn draw_chunk_grid(
     mut gizmos: Gizmos,
     player_query: Query<&Transform, With<Player>>,
@@ -156,7 +157,7 @@ fn draw_chunk_grid(
         );
     }
 }
-#[add_system(schedule = OnEnter(GameState::InGame), plugin = WorldPlugin)]
+// #[add_system(schedule = OnEnter(GameState::InGame), plugin = WorldPlugin)]
 fn generate_world_image(config: Res<WorldGeneratationConfig>, generator: Res<WorldGenerator>) {
     use image::{Rgba, RgbaImage};
 
