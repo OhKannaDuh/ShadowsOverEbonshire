@@ -18,5 +18,7 @@ impl Plugin for WorldPlugin {
     }
 }
 
+mod biome;
+pub use biome::*;
 mod systems;
 mod world_gen_tester;

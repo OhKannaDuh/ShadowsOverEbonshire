@@ -167,7 +167,8 @@ fn fill_new_chunks(
                 let wy = base_y + y as i32;
 
                 let p = generator.get_point(wx, wy);
-                let c = tile_id_to_color(p.tile_id); // Rgba<u8>
+                let b = p.get_biome();
+                let c = b.get_color();
 
                 let i = x as usize * 4;
                 row[i] = c.0[0];
@@ -176,39 +177,5 @@ fn fill_new_chunks(
                 row[i + 3] = c.0[3];
             }
         }
-    }
-}
-
-fn tile_id_to_color(tile_id: TileId) -> Rgba<u8> {
-    match tile_id {
-        TileId::Rainforest => Rgba([0, 100, 0, 255]), // Dark green
-        TileId::Savannah => Rgba([189, 183, 107, 255]), // Dark khaki
-        TileId::TropicalSeasonalForest => Rgba([34, 139, 34, 255]), // Forest green
-
-        TileId::Desert => Rgba([237, 201, 175, 255]), // Sandy beige
-        TileId::SemiDesert => Rgba([210, 180, 140, 255]), // Tan
-        TileId::XericShrubland => Rgba([160, 82, 45, 255]), // Sienna
-
-        TileId::Grassland => Rgba([124, 252, 0, 255]), // Lawn green
-        TileId::DeciduousForest => Rgba([34, 139, 34, 255]), // Forest green
-        TileId::TemperateRainforest => Rgba([0, 100, 0, 255]), // Dark green
-        TileId::Mediterranean => Rgba([107, 142, 35, 255]), // Olive drab
-
-        TileId::Taiga => Rgba([46, 139, 87, 255]), // Sea green
-        TileId::BorealForest => Rgba([0, 128, 0, 255]), // Green
-
-        TileId::Tundra => Rgba([176, 196, 222, 255]), // Light steel blue
-        TileId::IceSheet => Rgba([240, 248, 255, 255]), // Alice blue (icy)
-
-        TileId::Mountain => Rgba([139, 137, 137, 255]), // Gray
-        TileId::Swamp => Rgba([47, 79, 47, 255]),       // Dark slate gray
-        TileId::River => Rgba([30, 144, 255, 255]),     // Dodger blue
-
-        TileId::Snow => Rgba([255, 250, 250, 255]), // Snow white
-
-        TileId::Beach => Rgba([255, 228, 196, 255]), // Bisque
-        TileId::ShallowOcean => Rgba([70, 130, 180, 255]), // Steel blue
-        TileId::Ocean => Rgba([0, 0, 139, 255]),     // Dark blue
-        TileId::DeepOcean => Rgba([0, 0, 255, 255]), // Blue
     }
 }

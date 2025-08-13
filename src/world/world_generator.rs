@@ -4,237 +4,101 @@ use bevy_ecs_tilemap::prelude::*;
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
 
+use crate::world::biome::*;
+
 const DEFAULT_SEED: u32 = 123456789;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Climate {
-    Tropical,
-    Arid,
-    Temperate,
-    Boreal,
-    Polar,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Biome {
-    // Tropical biomes
-    Rainforest,
-    Savannah,
-    TropicalSeasonalForest,
-
-    // Arid biomes
-    Desert,
-    SemiDesert,
-    XericShrubland,
-
-    // Temperate biomes
-    Grassland,
-    DeciduousForest,
-    TemperateRainforest,
-    Mediterranean,
-
-    // Boreal biomes
-    Taiga,
-    BorealForest,
-
-    // Polar biomes
-    Tundra,
-    IceSheet,
-
-    // Special biomes
-    Mountain,
-    Swamp,
-    River,
-
-    Ocean,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TileId {
-    Rainforest,
-    Savannah,
-    TropicalSeasonalForest,
-
-    Desert,
-    SemiDesert,
-    XericShrubland,
-
-    Grassland,
-    DeciduousForest,
-    TemperateRainforest,
-    Mediterranean,
-
-    Taiga,
-    BorealForest,
-
-    Tundra,
-    IceSheet,
-
-    Mountain,
-    Swamp,
-    River,
-    Snow,
-
-    Beach,
-    ShallowOcean,
-    Ocean,
-    DeepOcean,
-}
 
 pub struct Point {
     pub x: i32,
     pub y: i32,
 
-    pub elevation: f32,
     pub temperature: f32,
-    pub humidity: f32,
-    pub moisture: f32,
+    pub temperature_level: u32,
 
-    pub climate: Climate,
-    pub biome: Biome,
-    pub tile_id: TileId,
+    pub humidity: f32,
+    pub humidity_level: u32,
+
+    pub continentalness: f32,
+    pub continentalness_level: u32,
+
+    pub erosion: f32,
+    pub erosion_level: u32,
+
+    pub weirdness: f32,
+    pub is_weird: bool,
+
+    pub peaks_and_valleys: f32,
+    pub peaks_and_valleys_level: u32,
 }
 
 impl Point {
     pub fn new(x: i32, y: i32, generator: &WorldGenerator) -> Self {
-        let elevation = generator.elevation_at(x, y);
         let temperature = generator.temperature_at(x, y);
         let humidity = generator.humidity_at(x, y);
-        let moisture = generator.moisture_at(x, y);
-
-        let climate = Point::determine_climate(temperature, humidity);
-        let biome = Point::determine_biome(climate, elevation, moisture);
-        let tile_id = Point::determine_tile_id(biome, elevation);
+        let continentalness = generator.continentalness_at(x, y);
+        let erosion = generator.erosion_at(x, y);
+        let weirdness = generator.weirdness_at(x, y);
+        let peaks_and_valleys = 1.0 - ((3.0 * weirdness.abs()) - 2.0).abs();
 
         Point {
             x,
             y,
-
-            elevation,
             temperature,
+            temperature_level: match temperature {
+                t if t < -0.45 => 0,
+                t if t < -0.15 => 1,
+                t if t < 0.2 => 2,
+                t if t < 0.55 => 3,
+                _ => 4,
+            },
             humidity,
-            moisture,
-
-            climate,
-            biome,
-            tile_id,
+            humidity_level: match humidity {
+                h if h < -0.35 => 0,
+                h if h < -0.1 => 1,
+                h if h < 0.1 => 2,
+                h if h < 0.3 => 3,
+                _ => 4,
+            },
+            continentalness,
+            continentalness_level: match continentalness {
+                // c if c < -0.455 => 0, // Deep ocean
+                // c if c < -0.19 => 1,  // Ocean
+                // c if c < -0.11 => 2,  // Coast
+                // c if c < 0.03 => 3,   // Near-inland
+                // c if c < 0.3 => 4,    // Mid-inland
+                // _ => 5,               // Far-inland
+                c if c < -0.55 => 0, // Deep ocean (rarer)
+                c if c < -0.28 => 1, // Ocean (rarer)
+                c if c < -0.05 => 2, // Coast (a bit wider shores)
+                c if c < 0.05 => 3,  // Near-inland
+                c if c < 0.35 => 4,  // Mid-inland
+                _ => 5,              // Far-inland
+            },
+            erosion,
+            erosion_level: match erosion {
+                e if e < -0.78 => 0,
+                e if e < -0.375 => 1,
+                e if e < -0.2225 => 2,
+                e if e < 0.05 => 3,
+                e if e < 0.45 => 4,
+                e if e < 0.55 => 5,
+                _ => 6,
+            },
+            weirdness,
+            is_weird: weirdness > 0.0,
+            peaks_and_valleys,
+            peaks_and_valleys_level: match peaks_and_valleys {
+                v if v < -0.85 => 0, // Valleys
+                v if v < -0.2 => 1,  // Low
+                v if v < 0.2 => 2,   // Mid
+                v if v < 0.7 => 3,   // High
+                _ => 4,              // Peaks
+            },
         }
     }
 
-    fn determine_climate(temperature: f32, humidity: f32) -> Climate {
-        if temperature > 0.7 && humidity > 0.7 {
-            Climate::Tropical
-        } else if temperature > 0.7 && humidity < 0.3 {
-            Climate::Arid
-        } else if temperature > 0.3 && temperature <= 0.7 {
-            Climate::Temperate
-        } else if temperature > 0.1 {
-            Climate::Boreal
-        } else {
-            Climate::Polar
-        }
-    }
-
-    fn determine_biome(climate: Climate, elevation: f32, moisture: f32) -> Biome {
-        if elevation > 0.8 {
-            return Biome::Mountain;
-        }
-
-        if elevation < 0.35 {
-            return Biome::Ocean;
-        }
-
-        match climate {
-            Climate::Tropical => {
-                if moisture > 0.8 {
-                    Biome::Rainforest
-                } else if moisture > 0.5 {
-                    Biome::TropicalSeasonalForest
-                } else {
-                    Biome::Savannah
-                }
-            }
-            Climate::Arid => {
-                if moisture < 0.2 {
-                    Biome::Desert
-                } else if moisture < 0.4 {
-                    Biome::SemiDesert
-                } else {
-                    Biome::XericShrubland
-                }
-            }
-            Climate::Temperate => {
-                if moisture < 0.3 {
-                    Biome::Grassland
-                } else if moisture < 0.6 {
-                    Biome::Mediterranean
-                } else if moisture < 0.8 {
-                    Biome::DeciduousForest
-                } else {
-                    Biome::TemperateRainforest
-                }
-            }
-            Climate::Boreal => {
-                if moisture < 0.5 {
-                    Biome::Taiga
-                } else {
-                    Biome::BorealForest
-                }
-            }
-            Climate::Polar => {
-                if moisture < 0.3 {
-                    Biome::Tundra
-                } else {
-                    Biome::IceSheet
-                }
-            }
-        }
-    }
-
-    fn determine_tile_id(biome: Biome, elevation: f32) -> TileId {
-        match biome {
-            Biome::Mountain => {
-                if elevation > 0.95 {
-                    TileId::Snow
-                } else {
-                    TileId::Mountain
-                }
-            }
-
-            Biome::Ocean => {
-                if elevation < 0.3 {
-                    TileId::ShallowOcean
-                } else if elevation < 0.2 {
-                    TileId::Ocean
-                } else if elevation < 0.15 {
-                    TileId::DeepOcean
-                } else {
-                    TileId::Beach
-                }
-            }
-
-            Biome::River => TileId::River,
-            Biome::Swamp => TileId::Swamp,
-
-            Biome::Rainforest => TileId::Rainforest,
-            Biome::Savannah => TileId::Savannah,
-            Biome::TropicalSeasonalForest => TileId::TropicalSeasonalForest,
-
-            Biome::Desert => TileId::Desert,
-            Biome::SemiDesert => TileId::SemiDesert,
-            Biome::XericShrubland => TileId::XericShrubland,
-
-            Biome::Grassland => TileId::Grassland,
-            Biome::DeciduousForest => TileId::DeciduousForest,
-            Biome::TemperateRainforest => TileId::TemperateRainforest,
-            Biome::Mediterranean => TileId::Mediterranean,
-
-            Biome::Taiga => TileId::Taiga,
-            Biome::BorealForest => TileId::BorealForest,
-
-            Biome::Tundra => TileId::Tundra,
-            Biome::IceSheet => TileId::IceSheet,
-        }
+    pub fn get_biome(&self) -> Biome {
+        pick_biome(self)
     }
 }
 
@@ -284,10 +148,14 @@ impl Default for WorldGeneratationConfig {
 #[derive(Resource, Debug)]
 #[insert_resource(plugin = WorldPlugin)]
 pub struct WorldGenerator {
-    elevation_noise: Perlin,
     temperature_noise: Perlin,
     humidity_noise: Perlin,
-    moisture_noise: Perlin,
+    continentalness_noise: Perlin,
+    erosion_noise: Perlin,
+    weirdness_noise: Perlin,
+
+    land_mask_noise: Perlin,
+
     equator_offset: f64,
 }
 
@@ -304,33 +172,16 @@ impl WorldGenerator {
         let equator_offset = raw * config.chunk_height as f64 * 16.0;
 
         WorldGenerator {
-            elevation_noise: Perlin::new(config.seed),
-            temperature_noise: Perlin::new(config.seed.wrapping_add(1)),
-            humidity_noise: Perlin::new(config.seed.wrapping_add(2)),
-            moisture_noise: Perlin::new(config.seed.wrapping_add(3)),
+            temperature_noise: Perlin::new(config.seed),
+            humidity_noise: Perlin::new(config.seed.wrapping_add(1)),
+            continentalness_noise: Perlin::new(config.seed.wrapping_add(2)),
+            erosion_noise: Perlin::new(config.seed.wrapping_add(3)),
+            weirdness_noise: Perlin::new(config.seed.wrapping_add(4)),
+
+            land_mask_noise: Perlin::new(config.seed.wrapping_add(42)),
+
             equator_offset,
         }
-    }
-
-    fn smoothed_elevation_at(&self, x: i32, y: i32) -> f32 {
-        let mut sum = 0.0;
-        let mut count = 0.0;
-        for dy in -1..=1 {
-            for dx in -1..=1 {
-                sum += self.elevation_at(x + dx, y + dy);
-                count += 1.0;
-            }
-        }
-        sum / count
-    }
-
-    fn latitude_gradient(&self, y: i32) -> f32 {
-        // adjust y by offset and scale down
-        let y_adj = (y as f64 + self.equator_offset) * 0.001;
-        // take absolute value and clamp between 0 and 1
-        let dist = y_adj.abs().min(1.0);
-        // invert so 1.0 at equator, 0.0 at pole
-        (1.0 - dist) as f32
     }
 
     fn fractal_noise(
@@ -355,42 +206,67 @@ impl WorldGenerator {
             frequency *= lacunarity;
         }
 
-        (total / max_value + 1.0) * 0.5
-    }
-
-    pub fn elevation_at(&self, x: i32, y: i32) -> f32 {
-        let nx = x as f64 * 0.001;
-        let ny = y as f64 * 0.001;
-
-        WorldGenerator::fractal_noise(&self.elevation_noise, nx, ny, 5, 0.5, 2.0)
+        total / max_value
     }
 
     pub fn temperature_at(&self, x: i32, y: i32) -> f32 {
         let nx = x as f64 * 0.001;
         let ny = (y as f64 + self.equator_offset) * 0.001;
 
-        let noise_temp =
-            WorldGenerator::fractal_noise(&self.temperature_noise, nx, ny, 4, 0.5, 2.0);
-        let lat_grad = self.latitude_gradient(y);
-
-        noise_temp * 0.7 + lat_grad * 0.3
+        WorldGenerator::fractal_noise(&self.temperature_noise, nx, ny, 4, 0.5, 2.0)
     }
 
     pub fn humidity_at(&self, x: i32, y: i32) -> f32 {
         let nx = x as f64 * 0.001;
-        let ny = y as f64 * 0.001;
+        let ny = (y as f64 + self.equator_offset) * 0.001;
 
-        let lat_grad = self.latitude_gradient(y);
-        let noise_hum = WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0);
-        noise_hum * 0.8 + lat_grad * 0.2
-        // WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0)
+        WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0)
     }
 
-    pub fn moisture_at(&self, x: i32, y: i32) -> f32 {
+    // pub fn continentalness_at(&self, x: i32, y: i32) -> f32 {
+    //     let nx = x as f64 * 0.001;
+    //     let ny = y as f64 * 0.001;
+
+    //     WorldGenerator::fractal_noise(&self.continentalness_noise, nx, ny, 4, 0.5, 2.0)
+    // }
+
+    pub fn continentalness_at(&self, x: i32, y: i32) -> f32 {
+        let base = WorldGenerator::fractal_noise(
+            &self.continentalness_noise,
+            x as f64 * 0.001,
+            y as f64 * 0.001,
+            4,
+            0.5,
+            2.0,
+        );
+
+        let mask = WorldGenerator::fractal_noise(
+            &self.land_mask_noise,
+            x as f64 * 0.0002,
+            y as f64 * 0.0002,
+            3,
+            0.5,
+            2.0,
+        );
+
+        let mask01 = (mask + 1.0) * 0.5;
+        let boosted = base + (mask01 - 0.5) * 0.4; // +/-0.2 push
+
+        boosted.clamp(-1.0, 1.0)
+    }
+
+    pub fn erosion_at(&self, x: i32, y: i32) -> f32 {
         let nx = x as f64 * 0.001;
         let ny = y as f64 * 0.001;
 
-        WorldGenerator::fractal_noise(&self.moisture_noise, nx, ny, 4, 0.5, 2.0)
+        WorldGenerator::fractal_noise(&self.erosion_noise, nx, ny, 4, 0.5, 2.0)
+    }
+
+    pub fn weirdness_at(&self, x: i32, y: i32) -> f32 {
+        let nx = x as f64 * 0.001;
+        let ny = y as f64 * 0.001;
+
+        WorldGenerator::fractal_noise(&self.weirdness_noise, nx, ny, 4, 0.5, 2.0)
     }
 
     pub fn generate_chunk(
@@ -417,7 +293,7 @@ impl WorldGenerator {
                 let tile_entity = commands
                     .spawn(TileBundle {
                         position: tile_pos,
-                        texture_index: TileTextureIndex(point.tile_id as u32),
+                        texture_index: TileTextureIndex(1), // change to get from biome
                         tilemap_id: TilemapId(tilemap),
                         ..Default::default()
                     })

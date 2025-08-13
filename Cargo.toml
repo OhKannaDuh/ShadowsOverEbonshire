@@ -31,6 +31,8 @@ iyes_perf_ui = "0.5.0"
 noise = "0.9.0"
 bevy_ecs_tilemap = "0.16.0"
 image = "0.25.6"
+strum = "0.27.2"
+strum_macros = "0.27.2"
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.
