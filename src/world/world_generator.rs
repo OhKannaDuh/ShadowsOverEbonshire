@@ -45,6 +45,8 @@ pub enum Biome {
     Mountain,
     Swamp,
     River,
+
+    Ocean,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -71,9 +73,12 @@ pub enum TileId {
     Mountain,
     Swamp,
     River,
-    Water,
-    Sand,
     Snow,
+
+    Beach,
+    ShallowOcean,
+    Ocean,
+    DeepOcean,
 }
 
 pub struct Point {
@@ -99,7 +104,7 @@ impl Point {
 
         let climate = Point::determine_climate(temperature, humidity);
         let biome = Point::determine_biome(climate, elevation, moisture);
-        let tile_id = Point::determine_tile_id(biome);
+        let tile_id = Point::determine_tile_id(biome, elevation);
 
         Point {
             x,
@@ -133,6 +138,10 @@ impl Point {
     fn determine_biome(climate: Climate, elevation: f32, moisture: f32) -> Biome {
         if elevation > 0.8 {
             return Biome::Mountain;
+        }
+
+        if elevation < 0.35 {
+            return Biome::Ocean;
         }
 
         match climate {
@@ -182,9 +191,28 @@ impl Point {
         }
     }
 
-    fn determine_tile_id(biome: Biome) -> TileId {
+    fn determine_tile_id(biome: Biome, elevation: f32) -> TileId {
         match biome {
-            Biome::Mountain => TileId::Mountain,
+            Biome::Mountain => {
+                if elevation > 0.95 {
+                    TileId::Snow
+                } else {
+                    TileId::Mountain
+                }
+            }
+
+            Biome::Ocean => {
+                if elevation < 0.3 {
+                    TileId::ShallowOcean
+                } else if elevation < 0.2 {
+                    TileId::Ocean
+                } else if elevation < 0.15 {
+                    TileId::DeepOcean
+                } else {
+                    TileId::Beach
+                }
+            }
+
             Biome::River => TileId::River,
             Biome::Swamp => TileId::Swamp,
 
@@ -260,6 +288,7 @@ pub struct WorldGenerator {
     temperature_noise: Perlin,
     humidity_noise: Perlin,
     moisture_noise: Perlin,
+    equator_offset: f64,
 }
 
 impl Default for WorldGenerator {
@@ -270,27 +299,38 @@ impl Default for WorldGenerator {
 
 impl WorldGenerator {
     pub fn new(config: WorldGeneratationConfig) -> Self {
-        fn get_seed_from_noise(index: usize, noise: &Perlin) -> u32 {
-            let sample_point = (index as f64) * 100.0;
-
-            let noise_val = noise.get([sample_point]);
-
-            let normalized = ((noise_val + 1.0) / 2.0).clamp(0.0, 1.0);
-            (normalized * u32::MAX as f64) as u32
-        }
-
-        let seed_noise = Perlin::new(config.seed);
+        let equator_noise = Perlin::new(config.seed.wrapping_add(4));
+        let raw = equator_noise.get([0.0]);
+        let equator_offset = raw * config.chunk_height as f64 * 16.0;
 
         WorldGenerator {
-            // elevation_noise: Perlin::new(get_seed_from_noise(0, &seed_noise)),
-            // temperature_noise: Perlin::new(get_seed_from_noise(1, &seed_noise)),
-            // humidity_noise: Perlin::new(get_seed_from_noise(2, &seed_noise)),
-            // moisture_noise: Perlin::new(get_seed_from_noise(3, &seed_noise)),
             elevation_noise: Perlin::new(config.seed),
             temperature_noise: Perlin::new(config.seed.wrapping_add(1)),
             humidity_noise: Perlin::new(config.seed.wrapping_add(2)),
             moisture_noise: Perlin::new(config.seed.wrapping_add(3)),
+            equator_offset,
         }
+    }
+
+    fn smoothed_elevation_at(&self, x: i32, y: i32) -> f32 {
+        let mut sum = 0.0;
+        let mut count = 0.0;
+        for dy in -1..=1 {
+            for dx in -1..=1 {
+                sum += self.elevation_at(x + dx, y + dy);
+                count += 1.0;
+            }
+        }
+        sum / count
+    }
+
+    fn latitude_gradient(&self, y: i32) -> f32 {
+        // adjust y by offset and scale down
+        let y_adj = (y as f64 + self.equator_offset) * 0.001;
+        // take absolute value and clamp between 0 and 1
+        let dist = y_adj.abs().min(1.0);
+        // invert so 1.0 at equator, 0.0 at pole
+        (1.0 - dist) as f32
     }
 
     fn fractal_noise(
@@ -327,16 +367,23 @@ impl WorldGenerator {
 
     pub fn temperature_at(&self, x: i32, y: i32) -> f32 {
         let nx = x as f64 * 0.001;
-        let ny = y as f64 * 0.001;
+        let ny = (y as f64 + self.equator_offset) * 0.001;
 
-        WorldGenerator::fractal_noise(&self.temperature_noise, nx, ny, 4, 0.5, 2.0)
+        let noise_temp =
+            WorldGenerator::fractal_noise(&self.temperature_noise, nx, ny, 4, 0.5, 2.0);
+        let lat_grad = self.latitude_gradient(y);
+
+        noise_temp * 0.7 + lat_grad * 0.3
     }
 
     pub fn humidity_at(&self, x: i32, y: i32) -> f32 {
         let nx = x as f64 * 0.001;
         let ny = y as f64 * 0.001;
 
-        WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0)
+        let lat_grad = self.latitude_gradient(y);
+        let noise_hum = WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0);
+        noise_hum * 0.8 + lat_grad * 0.2
+        // WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0)
     }
 
     pub fn moisture_at(&self, x: i32, y: i32) -> f32 {
@@ -344,16 +391,6 @@ impl WorldGenerator {
         let ny = y as f64 * 0.001;
 
         WorldGenerator::fractal_noise(&self.moisture_noise, nx, ny, 4, 0.5, 2.0)
-    }
-
-    pub fn tile_for_height(&self, h: f32) -> u32 {
-        match h {
-            0.0..=0.3 => 3,  // water
-            0.3..=0.4 => 2,  // sand
-            0.4..=0.45 => 1, // dirt
-            0.45..=0.7 => 0, // grass
-            _ => 4,          // dense foiliage
-        }
     }
 
     pub fn generate_chunk(

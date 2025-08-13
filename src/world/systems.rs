@@ -200,9 +200,12 @@ fn generate_world_image(config: Res<WorldGeneratationConfig>, generator: Res<Wor
             TileId::Swamp => Rgba([47, 79, 47, 255]),       // Dark slate gray
             TileId::River => Rgba([30, 144, 255, 255]),     // Dodger blue
 
-            TileId::Water => Rgba([0, 0, 255, 255]), // Blue
-            TileId::Sand => Rgba([244, 164, 96, 255]), // Sandy brown
             TileId::Snow => Rgba([255, 250, 250, 255]), // Snow white
+
+            TileId::Beach => Rgba([255, 228, 196, 255]), // Bisque
+            TileId::ShallowOcean => Rgba([70, 130, 180, 255]), // Steel blue
+            TileId::Ocean => Rgba([0, 0, 139, 255]),     // Dark blue
+            TileId::DeepOcean => Rgba([0, 0, 255, 255]), // Blue
         }
     }
 
