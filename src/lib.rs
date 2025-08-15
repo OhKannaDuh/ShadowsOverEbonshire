@@ -7,6 +7,7 @@ pub enum GameState {
     #[default]
     Loading,
     // MainMenu,
+    GeneratingMap,
     InGame,
 }
 

@@ -1,5 +1,3 @@
-use bevy::platform::collections::HashSet;
-
 use crate::actor::Health;
 use crate::enemy::Enemy;
 use crate::enemy::EnemyKdTree;

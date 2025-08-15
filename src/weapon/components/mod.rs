@@ -10,8 +10,6 @@ pub(crate) use orbit_weapon::*;
 mod orbit_and_lunge_weapon;
 pub(crate) use orbit_and_lunge_weapon::*;
 
-// use bevy::platform::collections::HashMap;
-
 // #[derive(Debug, Reflect)]
 // pub enum WeaponType {
 //     Orbit(OrbitWeaponData),

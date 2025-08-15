@@ -1,11 +1,9 @@
-use bevy::platform::collections::HashMap;
 use rand::Rng;
 
 use crate::actor::*;
 use crate::animated_sprite::*;
 use crate::camera::MainCamera;
 use crate::enemy::*;
-use crate::player::*;
 
 #[derive(Resource)]
 #[insert_resource(plugin = EnemyPlugin)]

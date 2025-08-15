@@ -1,5 +1,3 @@
-use bevy::platform::collections::HashMap;
-
 use crate::prelude::*;
 use crate::weapon::components::*;
 
