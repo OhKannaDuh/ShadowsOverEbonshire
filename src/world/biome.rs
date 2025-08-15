@@ -386,19 +386,30 @@ impl Biome {
     pub fn get_color(&self) -> Rgba<u8> {
         match self {
             // Oceans
-            Biome::FrozenOcean => Rgba([180, 220, 255, 255]), // pale icy blue
-            Biome::DeepFrozenOcean => Rgba([100, 160, 200, 255]),
-            Biome::ColdOcean => Rgba([80, 140, 200, 255]),
-            Biome::DeepColdOcean => Rgba([50, 100, 160, 255]),
-            Biome::Ocean => Rgba([0, 105, 148, 255]),
-            Biome::DeepOcean => Rgba([0, 70, 110, 255]),
-            Biome::LukewarmOcean => Rgba([0, 130, 160, 255]),
-            Biome::DeepLukewarmOcean => Rgba([0, 90, 120, 255]),
-            Biome::WarmOcean => Rgba([0, 150, 180, 255]),
+            // Biome::FrozenOcean => Rgba([180, 220, 255, 255]),
+            // Biome::DeepFrozenOcean => Rgba([100, 160, 200, 255]),
+            // Biome::ColdOcean => Rgba([80, 140, 200, 255]),
+            // Biome::DeepColdOcean => Rgba([50, 100, 160, 255]),
+            // Biome::Ocean => Rgba([0, 105, 148, 255]),
+            // Biome::DeepOcean => Rgba([0, 70, 110, 255]),
+            // Biome::LukewarmOcean => Rgba([0, 130, 160, 255]),
+            // Biome::DeepLukewarmOcean => Rgba([0, 90, 120, 255]),
+            // Biome::WarmOcean => Rgba([0, 150, 180, 255]),
+            Biome::FrozenOcean => Rgba([0, 0, 255, 255]),
+            Biome::DeepFrozenOcean => Rgba([0, 0, 255, 255]),
+            Biome::ColdOcean => Rgba([0, 0, 255, 255]),
+            Biome::DeepColdOcean => Rgba([0, 0, 255, 255]),
+            Biome::Ocean => Rgba([0, 0, 255, 255]),
+            Biome::DeepOcean => Rgba([0, 0, 255, 255]),
+            Biome::LukewarmOcean => Rgba([0, 0, 255, 255]),
+            Biome::DeepLukewarmOcean => Rgba([0, 0, 255, 255]),
+            Biome::WarmOcean => Rgba([0, 0, 255, 255]),
 
             // Rivers
-            Biome::River => Rgba([30, 144, 255, 255]), // dodger blue
-            Biome::FrozenRiver => Rgba([200, 230, 255, 255]),
+            // Biome::River => Rgba([30, 144, 255, 255]), // dodger blue
+            // Biome::FrozenRiver => Rgba([200, 230, 255, 255]),
+            Biome::River => Rgba([0, 0, 255, 255]),
+            Biome::FrozenRiver => Rgba([0, 0, 255, 255]),
 
             // Beaches
             Biome::SnowyBeach => Rgba([240, 240, 255, 255]), // icy white

@@ -153,8 +153,19 @@ pub struct WorldGenerator {
     continentalness_noise: Perlin,
     erosion_noise: Perlin,
     weirdness_noise: Perlin,
-
     land_mask_noise: Perlin,
+
+    c_off: (f64, f64),
+    t_off: (f64, f64),
+    h_off: (f64, f64),
+    e_off: (f64, f64),
+    w_off: (f64, f64),
+
+    c_rot: f64,
+    t_rot: f64,
+    h_rot: f64,
+    e_rot: f64,
+    w_rot: f64,
 
     equator_offset: f64,
 }
@@ -171,6 +182,38 @@ impl WorldGenerator {
         let raw = equator_noise.get([0.0]);
         let equator_offset = raw * config.chunk_height as f64 * 16.0;
 
+        let seed_u64 = config.seed as u64;
+        let mk = |n| {
+            (((seed_u64.wrapping_mul(6364136223846793005).wrapping_add(n)) % 10_000_000) as f64)
+                / 7.0
+        };
+
+        fn hash_u64(seed: u64, k: u64) -> u64 {
+            // simple SplitMix64-ish scrambler
+            let mut z = seed.wrapping_add(k).wrapping_add(0x9E3779B97F4A7C15);
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
+            z ^ (z >> 31)
+        }
+
+        fn f64_01(seed: u64, k: u64) -> f64 {
+            // uniform in [0,1)
+            (hash_u64(seed, k) as f64) / (u64::MAX as f64)
+        }
+
+        fn offset_pair(seed: u64, kx: u64, ky: u64, magnitude: f64) -> (f64, f64) {
+            // big, non-integer offsets to avoid lattice origin
+            (
+                (f64_01(seed, kx) * magnitude),
+                (f64_01(seed, ky) * magnitude),
+            )
+        }
+
+        fn angle(seed: u64, k: u64) -> f64 {
+            // radians in [0, 2π)
+            f64_01(seed, k) * std::f64::consts::TAU
+        }
+
         WorldGenerator {
             temperature_noise: Perlin::new(config.seed),
             humidity_noise: Perlin::new(config.seed.wrapping_add(1)),
@@ -179,6 +222,18 @@ impl WorldGenerator {
             weirdness_noise: Perlin::new(config.seed.wrapping_add(4)),
 
             land_mask_noise: Perlin::new(config.seed.wrapping_add(42)),
+
+            c_off: (mk(11), mk(12)),
+            t_off: (mk(21), mk(22)),
+            h_off: (mk(31), mk(32)),
+            e_off: (mk(41), mk(42)),
+            w_off: (mk(51), mk(52)),
+
+            c_rot: angle(seed_u64, 61),
+            t_rot: angle(seed_u64, 62),
+            h_rot: angle(seed_u64, 63),
+            e_rot: angle(seed_u64, 64),
+            w_rot: angle(seed_u64, 65),
 
             equator_offset,
         }
@@ -209,45 +264,49 @@ impl WorldGenerator {
         total / max_value
     }
 
-    pub fn temperature_at(&self, x: i32, y: i32) -> f32 {
-        let nx = x as f64 * 0.001;
-        let ny = (y as f64 + self.equator_offset) * 0.001;
+    fn rotate(x: f64, y: f64, theta: f64) -> (f64, f64) {
+        let (s, c) = theta.sin_cos();
+        (x * c - y * s, x * s + y * c)
+    }
 
-        WorldGenerator::fractal_noise(&self.temperature_noise, nx, ny, 4, 0.5, 2.0)
+    pub fn temperature_at(&self, x: i32, y: i32) -> f32 {
+        let scale = 0.001;
+        let (mut nx, mut ny) = (
+            (x as f64 + self.t_off.0) * scale,
+            (y as f64 + self.equator_offset + self.t_off.1) * scale,
+        );
+        (nx, ny) = Self::rotate(nx, ny, self.t_rot);
+        Self::fractal_noise(&self.temperature_noise, nx, ny, 4, 0.5, 2.0)
     }
 
     pub fn humidity_at(&self, x: i32, y: i32) -> f32 {
-        let nx = x as f64 * 0.001;
-        let ny = (y as f64 + self.equator_offset) * 0.001;
-
-        WorldGenerator::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0)
+        let scale = 0.001;
+        let (mut nx, mut ny) = (
+            (x as f64 + self.h_off.0) * scale,
+            (y as f64 + self.equator_offset + self.h_off.1) * scale,
+        );
+        (nx, ny) = Self::rotate(nx, ny, self.h_rot);
+        Self::fractal_noise(&self.humidity_noise, nx, ny, 4, 0.5, 2.0)
     }
 
-    // pub fn continentalness_at(&self, x: i32, y: i32) -> f32 {
-    //     let nx = x as f64 * 0.001;
-    //     let ny = y as f64 * 0.001;
-
-    //     WorldGenerator::fractal_noise(&self.continentalness_noise, nx, ny, 4, 0.5, 2.0)
-    // }
-
     pub fn continentalness_at(&self, x: i32, y: i32) -> f32 {
-        let base = WorldGenerator::fractal_noise(
-            &self.continentalness_noise,
-            x as f64 * 0.001,
-            y as f64 * 0.001,
-            4,
-            0.5,
-            2.0,
+        let scale = 0.001;
+        let (mut nx, mut ny) = (
+            (x as f64 + self.c_off.0) * scale,
+            (y as f64 + self.c_off.1) * scale,
         );
+        (nx, ny) = Self::rotate(nx, ny, self.c_rot);
 
-        let mask = WorldGenerator::fractal_noise(
-            &self.land_mask_noise,
-            x as f64 * 0.0002,
-            y as f64 * 0.0002,
-            3,
-            0.5,
-            2.0,
+        let base = Self::fractal_noise(&self.continentalness_noise, nx, ny, 4, 0.5, 2.0);
+
+        // Low-frequency mask to bias toward land
+        let mask_scale = 0.0002;
+        let (mut mx, mut my) = (
+            (x as f64 + self.c_off.0) * mask_scale,
+            (y as f64 + self.c_off.1) * mask_scale,
         );
+        (mx, my) = Self::rotate(mx, my, self.c_rot * 0.5); // mask rotation too
+        let mask = Self::fractal_noise(&self.land_mask_noise, mx, my, 3, 0.5, 2.0);
 
         let mask01 = (mask + 1.0) * 0.5;
         let boosted = base + (mask01 - 0.5) * 0.4; // +/-0.2 push
@@ -256,17 +315,23 @@ impl WorldGenerator {
     }
 
     pub fn erosion_at(&self, x: i32, y: i32) -> f32 {
-        let nx = x as f64 * 0.001;
-        let ny = y as f64 * 0.001;
-
-        WorldGenerator::fractal_noise(&self.erosion_noise, nx, ny, 4, 0.5, 2.0)
+        let scale = 0.001;
+        let (mut nx, mut ny) = (
+            (x as f64 + self.e_off.0) * scale,
+            (y as f64 + self.e_off.1) * scale,
+        );
+        (nx, ny) = Self::rotate(nx, ny, self.e_rot);
+        Self::fractal_noise(&self.erosion_noise, nx, ny, 4, 0.5, 2.0)
     }
 
     pub fn weirdness_at(&self, x: i32, y: i32) -> f32 {
-        let nx = x as f64 * 0.001;
-        let ny = y as f64 * 0.001;
-
-        WorldGenerator::fractal_noise(&self.weirdness_noise, nx, ny, 4, 0.5, 2.0)
+        let scale = 0.001;
+        let (mut nx, mut ny) = (
+            (x as f64 + self.w_off.0) * scale,
+            (y as f64 + self.w_off.1) * scale,
+        );
+        (nx, ny) = Self::rotate(nx, ny, self.w_rot);
+        Self::fractal_noise(&self.weirdness_noise, nx, ny, 4, 0.5, 2.0)
     }
 
     pub fn generate_chunk(
