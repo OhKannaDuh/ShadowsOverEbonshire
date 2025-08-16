@@ -4,23 +4,23 @@ use fast_poisson::Poisson2D;
 use crate::prelude::*;
 use crate::world::*;
 
-const TILE_SIZE_PX: f32 = 32.0;
-const CHUNK_TILES: f32 = 64.0;
-const WORLD_CHUNKS_X: f32 = 48.0;
-const WORLD_CHUNKS_Y: f32 = 48.0;
+pub const TILE_SIZE_PX: f32 = 32.0;
+pub const CHUNK_TILES: f32 = 64.0;
+pub const WORLD_CHUNKS_X: f32 = 48.0;
+pub const WORLD_CHUNKS_Y: f32 = 48.0;
 
 fn poisson_radius_for_count(area: f32, target: f32) -> f32 {
     ((1.154_700_5 * area) / target).sqrt()
 }
 
 #[derive(Reflect, Debug)]
-enum WorldFeatureType {
+pub enum WorldFeatureType {
     Core,
     Landmark,
 }
 
 #[derive(Reflect, Debug)]
-struct WorldFeature {
+pub struct WorldFeature {
     feature_type: WorldFeatureType,
     position: Vec3,
     radius: f32,
@@ -29,7 +29,7 @@ struct WorldFeature {
 #[derive(Resource, Reflect, Debug, Default)]
 #[reflect(Resource)]
 #[insert_resource(plugin = WorldPlugin)]
-struct WorldFeatures {
+pub struct WorldFeatures {
     features: Vec<WorldFeature>,
 }
 
@@ -50,10 +50,7 @@ fn add_core_feature(mut world_features: ResMut<WorldFeatures>) {
     plugin = WorldPlugin,
     after = add_core_feature
 )]
-fn sample_world_features(
-    mut world_features: ResMut<WorldFeatures>,
-    mut next_state: ResMut<NextState<GameState>>,
-) {
+fn sample_world_features(mut world_features: ResMut<WorldFeatures>) {
     // let seed: u64 = 0xCAFEF00D;
     let seed: u64 = 23534536336534;
 
@@ -82,8 +79,6 @@ fn sample_world_features(
             radius: r_tiles,
         });
     }
-
-    next_state.set(GameState::InGame);
 }
 
 fn world_tile_pos_to_chunk_pos(tile_pos: Vec2) -> Vec2 {
@@ -144,3 +139,5 @@ fn render_chunk_boundaries(mut gizmos: Gizmos) {
         Color::srgb(0.7, 0.7, 0.7),
     );
 }
+
+mod wfc;
