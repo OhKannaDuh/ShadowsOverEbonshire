@@ -36,6 +36,7 @@ strum_macros = "0.27.2"
 fast_poisson = { version = "1.0.2", features = ["single_precision"] }
 wave = { path = "wave" }
 wave_macros = { path = "wave_macros" }
+futures-lite = "2.6.1"
 
 # Your web builds will start failing if you add a dependency that pulls in `getrandom` v0.3+.
 # To fix this, you should tell `getrandom` to use the `wasm_js` backend on Wasm.

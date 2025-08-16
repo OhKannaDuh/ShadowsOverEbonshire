@@ -1,28 +1,49 @@
 use crate::prelude::*;
 use crate::world::world_generator::*;
+use bevy::{
+    tasks::{AsyncComputeTaskPool, Task},
+    time::Stopwatch,
+};
+use image::{Rgba, RgbaImage};
 use wave::{WaveFunction, WaveTiles};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 enum SocketType {
-    Core,
-    Road,
-    Wall,
     Grass,
-    Building,
+    Rose,
+    Dandelion,
+    Tree,
 }
 
 #[derive(WaveTiles, Copy, Clone, Debug, Eq, PartialEq)]
 #[wave_socket(SocketType)]
-enum Slate {
-    #[socket_east ([(SocketType::Road, 1u32)])]
-    #[socket_west ([(SocketType::Road, 1u32)])]
-    #[socket_north([(SocketType::Grass, 4u32), (SocketType::Building, 1u32)])]
-    #[socket_south([(SocketType::Grass, 4u32), (SocketType::Building, 1u32)])]
-    RoadHorizontal,
+pub enum Slate {
+    #[socket_vertical  ([(SocketType::Grass, 95u32), (SocketType::Rose, 2u32), (SocketType::Dandelion, 3u32)])]
+    #[socket_horizontal([(SocketType::Grass, 95u32), (SocketType::Rose, 2u32), (SocketType::Dandelion, 3u32)])]
+    Grass,
 
-    #[socket_vertical  ([(SocketType::Road, 1u32)])]
-    #[socket_horizontal([(SocketType::Grass, 4u32), (SocketType::Building, 1u32)])]
-    RoadVertical,
+    #[socket_vertical  ([(SocketType::Rose, 2u32)])]
+    #[socket_horizontal([(SocketType::Rose, 2u32)])]
+    Rose,
+
+    #[socket_vertical  ([(SocketType::Dandelion, 5u32)])]
+    #[socket_horizontal([(SocketType::Dandelion, 5u32)])]
+    Dandelion,
+
+    #[socket_vertical  ([(SocketType::Tree, 5u32), (SocketType::Grass, 2u32)])]
+    #[socket_horizontal([(SocketType::Tree, 5u32), (SocketType::Grass, 2u32)])]
+    Tree,
+}
+
+impl Slate {
+    fn get_color(&self) -> Rgba<u8> {
+        match self {
+            Slate::Grass => Rgba([34, 139, 34, 255]),
+            Slate::Rose => Rgba([220, 20, 60, 255]),
+            Slate::Dandelion => Rgba([255, 215, 0, 255]),
+            Slate::Tree => Rgba([0, 100, 0, 255]),
+        }
+    }
 }
 
 const WORLD_WIDTH: f32 = 48.0; // (chunks)
@@ -43,40 +64,89 @@ const WORLD_HEIGHT_SLATES_F: f32 = WORLD_HEIGHT_PX / SLATE_DIMENSION_PX;
 const WORLD_WIDTH_SLATES: usize = WORLD_WIDTH_SLATES_F as usize;
 const WORLD_HEIGHT_SLATES: usize = WORLD_HEIGHT_SLATES_F as usize;
 
+#[derive(Resource, Default)]
+#[insert_resource(plugin = WorldPlugin)]
+pub struct WfcTask {
+    pub task: Option<Task<Result<Vec<((usize, usize), Slate)>, String>>>,
+    pub timer: Stopwatch,
+}
+
 #[add_system(
     schedule = OnEnter(GameState::GeneratingMap),
     plugin = WorldPlugin,
     after = sample_world_features
 )]
-fn wave_function_collapse(mut next_state: ResMut<NextState<GameState>>) {
+fn wave_function_collapse(mut wfc: ResMut<WfcTask>) {
+    if wfc.task.is_some() {
+        return;
+    }
+
     let seed: u64 = 23_534_536_336_534;
+    let w = WORLD_WIDTH_SLATES;
+    let h = WORLD_HEIGHT_SLATES;
 
-    // Build the wave (note: WaveFunction only takes `Slate` now)
-    let mut wave = WaveFunction::<Slate>::new([WORLD_WIDTH_SLATES, WORLD_HEIGHT_SLATES], seed);
+    wfc.timer = Stopwatch::new();
+    wfc.task = Some(AsyncComputeTaskPool::get().spawn(async move {
+        let mut wave = WaveFunction::<Slate>::new([w, h], seed);
 
-    let center_x = WORLD_WIDTH_SLATES / 2;
-    let center_y = WORLD_HEIGHT_SLATES / 2;
+        let (cx, cy) = (w / 2, h / 2);
+        wave.set((cx, cy), Slate::Grass);
 
-    // Set starting tiles (priors)
-    wave.set((center_x, center_y), Slate::RoadHorizontal);
-    wave.set((center_x + 1, center_y), Slate::RoadHorizontal);
+        wave.collapse::<SocketType>()
+            .map_err(|e| format!("Wave contradiction at {:?}", e.at))
+    }));
+}
 
-    // Collapse. Because HasSockets is generic in `S`, we specify the socket type here.
-    let tiles: Vec<((usize, usize), Slate)> =
-        wave.collapse::<SocketType>().expect("WFC contradiction");
+#[add_system(
+    schedule = Update,
+    plugin = WorldPlugin,
+    run_if = in_state(GameState::GeneratingMap)
+)]
+fn poll_wave_function_collapse(
+    mut wfc: ResMut<WfcTask>,
+    mut next_state: ResMut<NextState<GameState>>,
+    time: Res<Time>,
+) {
+    wfc.timer.tick(time.delta());
 
-    // If you actually want sockets per cell rather than the chosen Slate, map them here.
-    // You need a policy for which side to take; here's an example using 'North' and
-    // falling back to SocketType::Core if empty:
-    /*
-    use wave::Direction;
-    let tiles_sockets: Vec<((usize, usize), SocketType)> = tiles.iter().map(|(p, t)| {
-        let s = t.sockets(Direction::North).get(0).copied().unwrap_or(SocketType::Core);
-        (*p, s)
-    }).collect();
-    */
+    use futures_lite::future;
+    if let Some(task) = wfc.task.as_mut() {
+        if let Some(result) = future::block_on(future::poll_once(task)) {
+            wfc.task = None;
 
-    // save_slate_image(&space, "wfc_generation.png").expect("Failed to save slate image");
+            info!(
+                "Wave function collapse completed in {:?}",
+                wfc.timer.elapsed()
+            );
 
-    next_state.set(GameState::InGame);
+            match result {
+                Ok(tiles) => {
+                    const SCALE: u32 = 1;
+                    let width_px = (WORLD_WIDTH_SLATES as u32) * SCALE;
+                    let height_px = (WORLD_HEIGHT_SLATES as u32) * SCALE;
+
+                    let mut img = RgbaImage::from_pixel(width_px, height_px, Rgba([0, 0, 0, 255]));
+
+                    for ((x, y), slate) in tiles {
+                        let color = slate.get_color();
+                        let px = (x as u32) * SCALE;
+                        let py = (y as u32) * SCALE;
+                        for dy in 0..SCALE {
+                            for dx in 0..SCALE {
+                                img.put_pixel(px + dx, py + dy, color);
+                            }
+                        }
+                    }
+
+                    img.save("wfc_generation.png")
+                        .expect("Failed to save slate image");
+
+                    next_state.set(GameState::InGame);
+                }
+                Err(err) => {
+                    error!("WFC failed: {err}");
+                }
+            }
+        }
+    }
 }
